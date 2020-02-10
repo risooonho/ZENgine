@@ -12,11 +12,11 @@ fn main() {
 
     let option = zengine::engine::EngineOption {
         title: std::string::String::from("ZENgine - PONG"),
-        fullscreen: true,
+        fullscreen: false,
         virtual_width: 800,
         virtual_height: 600,
-        screen_width: 1920,
-        screen_height: 1080
+        screen_width: 800,
+        screen_height: 600
     };
 
     zengine::engine::start(option);

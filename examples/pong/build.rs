@@ -11,9 +11,9 @@ fn main() {
     out_path.push(format!("target/{}", profile));
     
     let mut resource_path = manifest_dir.clone();
-    resource_path.push("resources");
+    resource_path.push("assets");
     let mut resource_out_path = out_path.clone();
-    resource_out_path.push("resources");
+    resource_out_path.push("assets");
     copy_dir_content_recursive(resource_path.as_path(), &resource_out_path);
 }
 
