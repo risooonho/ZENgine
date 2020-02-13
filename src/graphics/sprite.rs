@@ -23,11 +23,11 @@ pub struct Sprite<'a> {
     
     shader: &'a Shader,
 
-    material: &'a Material,
+    material: Material<'a>,
 }
 
 impl<'a> Sprite<'a> {
-    pub fn new(name: &str, shader: &'a Shader, material: &'a Material, width: Option<f32>, height: Option<f32>) -> Sprite<'a> {
+    pub fn new(name: &str, shader: &'a Shader, material: Material<'a>, width: Option<f32>, height: Option<f32>) -> Sprite<'a> {
         Sprite {
             name: String::from(name),
 

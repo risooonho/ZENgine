@@ -1,7 +1,6 @@
 extern crate sdl2;
 extern crate gl;
 
-use crate::assets::image_loader::ImageAsset;
 use sdl2::VideoSubsystem;
 use serde::{Deserialize, Serialize};
 
@@ -10,14 +9,13 @@ use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 
 use crate::gl_utilities::shader::{ShaderManager};
-use crate::graphics::material::MaterialManager;
-//use crate::graphics::texture::TextureManager;
-//use crate::assets::asset_manager::AssetManager;
+use crate::graphics::texture::Texture;
 
 use crate::math::matrix4x4::Matrix4x4;
 use crate::graphics::sprite::Sprite;
 use crate::math::transform::Transform;
 use crate::graphics::color::Color;
+use crate::graphics::material::Material;
 
 extern "system" fn dbg_callback(
     source: gl::types::GLenum,
@@ -90,9 +88,6 @@ pub fn start(option: EngineOption) {
     println!("OpenGL Profile: {:?} - OpenGL Version {:?}", gl_attr.context_profile(), gl_attr.context_version());
     
     let mut shader_manager = ShaderManager::init();
-    let mut material_manager = MaterialManager::init();
-    //let mut texture_manager = TextureManager::init();
-    //let mut asset_manager = AssetManager::init();
 
     let projection = Matrix4x4::orthographics(0.0, option.virtual_width as f32, 0.0, option.virtual_height as f32, -100.0, 100.0);
 
@@ -104,34 +99,19 @@ pub fn start(option: EngineOption) {
 
     let basic_shader = shader_manager.get("basic");    
     
-    //let logo = asset_manager.load("logo", "assets/images/test.png");
-    //let logo2 = asset_manager.load("logo2", "assets/images/test2.png");
-
-    //let test = Any::downcast_ref::<ImageAsset>(a.as_ref()).unwrap();
-
-    //let image = a.as_ref() as &ImageAsset;
-
-    //texture_manager.register("logo_texture", ImageAsset::convert(logo).as_ref());
-
-    //texture_manager.register("logo_texture2", ImageAsset::convert(logo2).as_ref());
-
-    /*let texture = texture_manager.get("logo_texture");
-    let texture2 = texture_manager.get("logo_texture2");*/
-
-    material_manager.register("test", "assets/images/test.png", Color::white());
-    //material_manager.register("test2", "assets/images/test2.png", Color::white());
-
-    //material_manager.release("test");
-    //material_manager.release("test2");
+    let texture = Texture::new("test", "assets/images/test.png");
     
     basic_shader.use_shader();
-    
-    
-    //texture_manager.release("logo_texture");
 
     let u_projection_location = basic_shader.get_uniform_location("u_projection");
 
-    let mut sprite = Sprite::new("test", basic_shader, material_manager.get("test"), None, None);
+    let mut sprite = Sprite::new(
+        "test", 
+        basic_shader, 
+        Material::new(Color::white(), &texture),
+        None, 
+        None
+    );
     sprite.load();
 
     let mut transform = Transform::new();

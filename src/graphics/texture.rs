@@ -1,65 +1,35 @@
 extern crate image;
 
-use crate::assets::image_loader::ImageAsset;
 use crate::assets::image_loader;
-use std::collections::HashMap;
-use core::sync::atomic::{AtomicBool, Ordering};
-
-/// Only one AssetManager can be alive at time
-/// Set to false by default (not alive)
-static IS_TEXTURE_MANAGER_ALIVE: AtomicBool = AtomicBool::new(false);
 
 const LEVEL: i32 = 0;
 const BORDER: i32 = 0;
-/*
-pub struct TextureManager {
-    textures: HashMap<String, Texture>
-}
-
-impl TextureManager {
-    pub fn init() -> TextureManager {
-        let was_alive = IS_TEXTURE_MANAGER_ALIVE.swap(true, Ordering::Relaxed);
-
-        if !was_alive {
-            TextureManager {
-                textures: HashMap::new()
-            }
-        } else {
-            panic!("Cannot create two instance of TextureManager");
-        }        
-    }
-
-    pub fn get(&self, image_path: &str) -> &Texture {
-        match self.textures.get(image_path) {
-            Some(texture) => {                
-                return texture;
-            },
-            _ => {
-                self.textures.insert(
-                    String::from(image_path), 
-                    Texture::new(image_path, image_loader::load(image_path))
-                ); 
-
-                return self.get(image_path);
-            }
-        };
-    }
-
-    pub fn release(&mut self, name: &str) {
-        self.textures.remove(name);
-    }
-}*/
 
 pub struct Texture {
+    pub name: String,
+
     width: u32,
     height: u32,
 
     texture_id: u32
 }
 
+impl Drop for Texture {
+    fn drop(&mut self) {
+        unsafe {
+            gl::DeleteTextures(1, &self.texture_id);
+        }
+        println!("destroyed texture {}", self.name);
+    }
+}
+
 impl Texture {
-    pub fn new(name: &str, image: ImageAsset) -> Texture {
+    pub fn new(name: &str, image_path: &str) -> Texture {
+        let image = image_loader::load(image_path);
+
         let mut t = Texture {
+            name: String::from(name),
+
             width: 1,
             height: 1,
 
