@@ -48,6 +48,8 @@ pub struct EngineOption {
 }
 
 pub fn start(option: EngineOption) {
+    println!("Hello, ZENgine!");
+
     // Init Window
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
@@ -59,8 +61,8 @@ pub fn start(option: EngineOption) {
 
     let mut window = video_subsystem
         .window(
-            option.title.as_ref(), 
-            option.screen_width, 
+            option.title.as_ref(),
+            option.screen_width,
             option.screen_height
         )
         .opengl()
@@ -85,30 +87,27 @@ pub fn start(option: EngineOption) {
     }
 
     println!("Pixel format of the window's GL context: {:?}", window.window_pixel_format());
-    println!("OpenGL Profile: {:?} - OpenGL Version {:?}", gl_attr.context_profile(), gl_attr.context_version());
-    
-    let mut shader_manager = ShaderManager::init();
+    println!("OpenGL Profile: {:?} - OpenGL version: {:?}", gl_attr.context_profile(), gl_attr.context_version());
 
     let projection = Matrix4x4::orthographics(0.0, option.virtual_width as f32, 0.0, option.virtual_height as f32, -100.0, 100.0);
 
-    shader_manager.register(
+    let mut shader_manager = ShaderManager::init();
+    
+    let basic_shader = shader_manager.register(
         "basic", 
         include_str!("basic.vert"), 
         include_str!("basic.frag")
     );
 
-    let basic_shader = shader_manager.get("basic");    
+    let texture1 = Texture::new("test.png");
+    let texture2 = Texture::new("duck.png");
     
-    let texture = Texture::new("test", "assets/images/test.png");
-    
-    basic_shader.use_shader();
-
     let u_projection_location = basic_shader.get_uniform_location("u_projection");
 
     let mut sprite = Sprite::new(
         "test", 
         basic_shader, 
-        Material::new(Color::white(), &texture),
+        Material::new(Color::white(), &texture2),
         None, 
         None
     );
@@ -116,12 +115,14 @@ pub fn start(option: EngineOption) {
 
     let mut transform = Transform::new();
     transform.position.x = 150.0;    
-    transform.position.y = 150.0;  
+    transform.position.y = 500.0;  
     
-    transform.rotation.z = 30.0;  
+    transform.rotation.z = 0.0;  
 
-    transform.scale.x = 3.0;
-    transform.scale.y = 3.0;
+    transform.scale.x = 50.0;
+    transform.scale.y = 50.0;
+
+    basic_shader.use_shader();
 
     resize(None, &option);
 
@@ -161,12 +162,12 @@ pub fn start(option: EngineOption) {
         unsafe {
             gl::Disable(gl::SCISSOR_TEST);
 
-            gl::ClearColor( 0.0, 0.0, 0.0, 1.0 );
-            gl::Clear(gl::COLOR_BUFFER_BIT);    
+            gl::ClearColor(0.0, 0.0, 0.0, 1.0);
+            gl::Clear(gl::COLOR_BUFFER_BIT);
 
-            gl::Enable(gl::SCISSOR_TEST);  
+            gl::Enable(gl::SCISSOR_TEST);
 
-            gl::ClearColor( 1.0, 0.5, 0.3, 1.0 );
+            gl::ClearColor(1.0, 1.0, 0.0, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT);
         
             gl::UniformMatrix4fv(
@@ -185,46 +186,43 @@ pub fn start(option: EngineOption) {
 fn resize(new_size: Option<(i32, i32)>, option: &EngineOption) {
     let target_aspect_ratio = option.virtual_width as f32 / option.virtual_height as f32;
 
-    let width: u32;
-    let height: u32;
+    let width: i32;
+    let height: i32;
     match new_size {
         Some(new_size) => {
-            width = new_size.0 as u32;
-            height = new_size.1 as u32;
+            width = new_size.0;
+            height = new_size.1;
         },
         None => {
-            width = option.screen_width;
-            height = option.screen_height;
+            width = option.screen_width as i32;
+            height = option.screen_height as i32;
         }
-    } 
-    let mut calculated_height = (width as f32 / target_aspect_ratio) as u32;
-    let mut calculated_width = width;
-    
-    if calculated_height > height {
-        //It doesn't fit our height, we must switch to pillarbox then
-        calculated_height = height;
-        calculated_width = (calculated_height as f32 * target_aspect_ratio) as u32;
     }
 
-    // set up the new viewport centered in the backbuffer
-    let vp_x = (width / 2) - (calculated_width / 2);
-    let vp_y = (height / 2) - (calculated_height/ 2);
-    
+    let mut calculated_height = (width as f32 / target_aspect_ratio) as i32;
+    let mut calculated_width = width;
+
+    if calculated_height > height {
+        calculated_height = height;
+        calculated_width = (calculated_height as f32 * target_aspect_ratio) as i32;
+    }
+
+    let vp_x = (width / 2) - (calculated_width /2);
+    let vp_y = (height / 2) - (calculated_height /2);
+
     unsafe {
-        gl::Viewport( vp_x as i32, vp_y as i32, calculated_width as i32, calculated_height as i32 );
-        gl::Scissor( vp_x as i32, vp_y as i32, calculated_width as i32, calculated_height as i32 );
+        gl::Viewport(vp_x, vp_y, calculated_width, calculated_height);
+        gl::Scissor(vp_x, vp_y, calculated_width, calculated_height);        
     }
 }
 
-fn get_display_mode(window: &VideoSubsystem, option: &EngineOption) -> DisplayMode {
-    for i in 0..window.num_display_modes(0).unwrap() {
-        let display_mode = window.display_mode(0,i).unwrap();
+fn get_display_mode(video_subsystem: &VideoSubsystem, option: &EngineOption) -> DisplayMode {
+    for i in 0..video_subsystem.num_display_modes(0).unwrap() {
+        let display_mode = video_subsystem.display_mode(0,i).unwrap();
         if display_mode.w == option.screen_width as i32 && display_mode.h == option.screen_height as i32 {
             return display_mode;
         }
     }
 
-    panic!("No DisplayMode available for width: {} and height {}", option.screen_width, option.screen_height);
+    panic!("No DisplayMode available for width {} and height {}", option.screen_width, option.screen_height);
 }
-
-

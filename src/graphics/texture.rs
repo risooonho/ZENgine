@@ -1,12 +1,9 @@
-extern crate image;
-
 use crate::assets::image_loader;
 
 const LEVEL: i32 = 0;
 const BORDER: i32 = 0;
 
 pub struct Texture {
-    pub name: String,
 
     width: u32,
     height: u32,
@@ -28,16 +25,11 @@ impl Texture {
         let image = image_loader::load(image_path);
 
         let mut t = Texture {
-            name: String::from(name),
-
-            width: 1,
-            height: 1,
+            width: img.width,
+            height: img.height,
 
             texture_id: 0
         };
-
-        t.width = image.width;
-        t.height = image.height;
 
         unsafe {
             gl::GenTextures(1, &mut t.texture_id);
@@ -52,12 +44,13 @@ impl Texture {
                 BORDER,
                 gl::RGBA,
                 gl::UNSIGNED_BYTE,
-                image.data.as_ptr() as *const gl::types::GLvoid
+                img.data.as_ptr() as *const gl::types::GLvoid
             );
 
             gl::GenerateMipmap(gl::TEXTURE_2D);
-            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
-            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
+
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
 
             gl::BindTexture(gl::TEXTURE_2D, 0);
         }
@@ -65,7 +58,7 @@ impl Texture {
         t
     }
 
-    pub fn activate_and_bind(&self) {
+    pub fn activate(&self) {
         unsafe {
             gl::ActiveTexture(gl::TEXTURE0);
             gl::BindTexture(gl::TEXTURE_2D, self.texture_id);

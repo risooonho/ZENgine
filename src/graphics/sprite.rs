@@ -1,10 +1,11 @@
+use crate::graphics::material::Material;
 use crate::math::matrix4x4::Matrix4x4;
 use crate::math::vector3::Vector3;
+use crate::graphics::color::Color;
 use crate::gl_utilities::gl_buffer::AttributeInfo;
 use crate::gl_utilities::gl_buffer::GLBuffer;
 use crate::gl_utilities::shader::Shader;
 use crate::graphics::vertex::Vertex;
-use crate::graphics::material::Material;
 
 pub struct Sprite<'a> {
     pub name: String,
@@ -14,16 +15,15 @@ pub struct Sprite<'a> {
 
     pub origin: Vector3,
 
+    u_color_position: i32,  
     u_model_location: i32,
-    u_tint_location: i32,  
     u_diffuse_location: i32,
 
     buffer: GLBuffer,
     vertices: [Vertex; 6],
-    
-    shader: &'a Shader,
 
-    material: Material<'a>,
+    shader: &'a Shader,
+    material: Material<'a>
 }
 
 impl<'a> Sprite<'a> {
@@ -36,8 +36,8 @@ impl<'a> Sprite<'a> {
 
             origin: Vector3::zero(),
 
+            u_color_position: shader.get_uniform_location("u_tint"),
             u_model_location: shader.get_uniform_location("u_model"),
-            u_tint_location: shader.get_uniform_location("u_tint"),
             u_diffuse_location: shader.get_uniform_location("u_diffuse"),
 
             buffer: GLBuffer::new(),
@@ -62,7 +62,7 @@ impl<'a> Sprite<'a> {
                 AttributeInfo {
                     location: a_tex_coord_location,
                     component_size: 2
-                },
+                }
             ],
             false
         );
@@ -100,15 +100,14 @@ impl<'a> Sprite<'a> {
             );
 
             gl::Uniform4f(
-                self.u_tint_location,
+                self.u_color_position,
                 self.material.tint.r,
                 self.material.tint.g,
                 self.material.tint.b,
                 self.material.tint.a
             );
 
-            //bind texture
-            self.material.texture.activate_and_bind();
+            self.material.texture.activate();
             gl::Uniform1i(self.u_diffuse_location, 0);
         }
 

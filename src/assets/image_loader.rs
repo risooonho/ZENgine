@@ -9,18 +9,17 @@ pub struct ImageAsset {
     pub data: Vec<u8>
 }
 
-pub fn load(file_path: &str) -> ImageAsset {
+pub fn load(image_name: &str) -> ImageAsset {
     match std::env::current_exe() {
         Ok(mut absolute_path) => {
             absolute_path.pop();
 
-            absolute_path.push(file_path);
+            absolute_path.push("assets/images/");
+            absolute_path.push(image_name);
 
             match image::open(absolute_path) {
-                Err(err) => panic!("Could not load image {}: {}", file_path, err),
                 Ok(img) => {
-                    println!("Dimensions of image are {:?}", img.dimensions());
-    
+
                     let (width, height) = img.dimensions();
 
                     let img = match img {
@@ -33,10 +32,10 @@ pub fn load(file_path: &str) -> ImageAsset {
                         height: height,
                         data: img.into_raw()
                     };
-                }
+                },
+                Err(e) => panic!("Could not load image {}: {}", image_name, e)
             }
-
-        }
-        Err(e) => panic!("failed to get current exe path: {}", e)
-    };
+        },
+        Err(e) => panic!("current exe path error: {}", e)
+    }
 }

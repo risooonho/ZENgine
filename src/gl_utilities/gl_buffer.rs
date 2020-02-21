@@ -60,7 +60,7 @@ impl GLBuffer {
                     gl::FLOAT,                              // data type
                     normalized as gl::types::GLboolean,     // normalized
                     self.stride,                            // stride (byte offset between consecutive attributes)
-                    (offset) as *const std::ffi::c_void     //offset in byte
+                    (offset) as *const std::ffi::c_void     // offset in byte
                 );
                 gl::EnableVertexAttribArray(attribute.location); 
                 

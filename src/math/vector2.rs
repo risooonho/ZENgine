@@ -13,16 +13,10 @@ impl Vector2 {
     }
 
     pub fn zero() -> Vector2 {
-        Vector2 {
-            x: 0.0,
-            y: 0.0
-        }
+        Vector2::new(0.0, 0.0)
     }
 
     pub fn one() -> Vector2 {
-        Vector2 {
-            x: 1.0,
-            y: 1.0
-        }
+        Vector2::new(1.0, 1.0)
     }
 }

@@ -29,11 +29,11 @@ impl ShaderManager {
                 shaders: HashMap::new()
             }
         } else {
-            panic!("Cannot create two instance of ShaderManager");
+            panic!("Cannot create two instance of AssetManager");
         }        
     }
 
-    pub fn register(&mut self, name: &str, vert_source: &str, frag_source: &str) {
+    pub fn register(&mut self, name: &str, vert_source: &str, frag_source: &str) -> &Shader {
         let mut shader = Shader {
             name: String::from(name),
             program: 0,
@@ -47,6 +47,8 @@ impl ShaderManager {
         );
 
         self.shaders.insert(String::from(name), shader);
+
+        self.get(name)
     }
 
     pub fn get(&self, name: &str) -> &Shader {
