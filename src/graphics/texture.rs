@@ -4,6 +4,7 @@ const LEVEL: i32 = 0;
 const BORDER: i32 = 0;
 
 pub struct Texture {
+    name: String,
 
     width: u32,
     height: u32,
@@ -21,10 +22,12 @@ impl Drop for Texture {
 }
 
 impl Texture {
-    pub fn new(name: &str, image_path: &str) -> Texture {
-        let image = image_loader::load(image_path);
+    pub fn new(image_name: &str) -> Texture {
+        let img = image_loader::load(image_name);
 
         let mut t = Texture {
+            name: String::from(image_name),
+
             width: img.width,
             height: img.height,
 
