@@ -1,19 +1,17 @@
 use crate::graphics::material::Material;
 use crate::math::matrix4x4::Matrix4x4;
 use crate::math::vector3::Vector3;
-use crate::graphics::color::Color;
 use crate::gl_utilities::gl_buffer::AttributeInfo;
 use crate::gl_utilities::gl_buffer::GLBuffer;
 use crate::gl_utilities::shader::Shader;
 use crate::graphics::vertex::Vertex;
 
 pub struct Sprite<'a> {
-    pub name: String,
 
     pub width: f32,
     pub height: f32,
 
-    pub origin: Vector3,
+    origin: Vector3,
 
     u_color_position: i32,  
     u_model_location: i32,
@@ -27,10 +25,8 @@ pub struct Sprite<'a> {
 }
 
 impl<'a> Sprite<'a> {
-    pub fn new(name: &str, shader: &'a Shader, material: Material<'a>, width: Option<f32>, height: Option<f32>) -> Sprite<'a> {
+    pub fn new(shader: &'a Shader, material: Material<'a>, width: Option<f32>, height: Option<f32>) -> Sprite<'a> {
         Sprite {
-            name: String::from(name),
-
             width: match width { Some(w) => w, _ => 10.0 },
             height: match height { Some(h) => h, _ => 10.0 },
 
@@ -47,6 +43,15 @@ impl<'a> Sprite<'a> {
             shader: shader,
             material: material
         }
+    }
+
+    pub fn get_origin(&self) -> &Vector3 {
+        &self.origin
+    }
+
+    pub fn set_origin(&mut self, value: Vector3) {
+        self.origin = value;
+        self.calculate_vertices();
     }
 
     pub fn load(&mut self) {

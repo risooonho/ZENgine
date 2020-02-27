@@ -1,6 +1,7 @@
 use crate::math::vector3::Vector3;
 use auto_ops::*;
 
+#[derive(Copy, Clone)]
 pub struct Matrix4x4 {
     pub data: [f32; 16]
 }

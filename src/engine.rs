@@ -1,6 +1,8 @@
 extern crate sdl2;
 extern crate gl;
 
+use crate::behaviors::Behavior;
+use crate::gl_utilities::shader::Shader;
 use sdl2::VideoSubsystem;
 use serde::{Deserialize, Serialize};
 
@@ -12,10 +14,15 @@ use crate::gl_utilities::shader::{ShaderManager};
 use crate::graphics::texture::Texture;
 
 use crate::math::matrix4x4::Matrix4x4;
+use crate::math::vector3::Vector3;
 use crate::graphics::sprite::Sprite;
 use crate::math::transform::Transform;
 use crate::graphics::color::Color;
 use crate::graphics::material::Material;
+
+use crate::world::scene::Scene;
+use crate::world::node::Node;
+use crate::components::sprite_component::SpriteComponent;
 
 extern "system" fn dbg_callback(
     source: gl::types::GLenum,
@@ -104,23 +111,9 @@ pub fn start(option: EngineOption) {
     
     let u_projection_location = basic_shader.get_uniform_location("u_projection");
 
-    let mut sprite = Sprite::new(
-        "test", 
-        basic_shader, 
-        Material::new(Color::white(), &texture2),
-        None, 
-        None
-    );
-    sprite.load();
+    let mut scene = create_scene(basic_shader, &texture1);
 
-    let mut transform = Transform::new();
-    transform.position.x = 150.0;    
-    transform.position.y = 500.0;  
-    
-    transform.rotation.z = 0.0;  
-
-    transform.scale.x = 50.0;
-    transform.scale.y = 50.0;
+    scene.load();
 
     basic_shader.use_shader();
 
@@ -159,6 +152,8 @@ pub fn start(option: EngineOption) {
             }
         }
 
+        scene.update();
+
         unsafe {
             gl::Disable(gl::SCISSOR_TEST);
 
@@ -177,10 +172,60 @@ pub fn start(option: EngineOption) {
                 projection.data.as_ptr()
             );
 
-            sprite.draw(&transform.get_transformation_matrix());
+            scene.render();
+
+            //sprite.draw(&transform.get_transformation_matrix());
         }
         window.gl_swap_window();
     }
+}
+
+struct TranslateBehavior {
+    pub value: f32,
+    pub axis: u32
+}
+
+impl Behavior for TranslateBehavior {
+    fn update(&self, owner_transform: &mut Transform) {
+        if self.axis == 1 {
+            owner_transform.position.x += self.value;
+        }
+        if self.axis == 2 {
+            owner_transform.position.y += self.value;
+        }
+        if self.axis == 3 {
+            owner_transform.position.z += self.value;
+        }
+    }
+}
+
+fn create_scene<'a>(shader: &'a Shader, texture: &'a Texture) -> Scene<'a> {
+    let mut scene = Scene::new();
+
+    let s_component = SpriteComponent::new("Test", 200.0, 200.0, Vector3::one(), shader, Material::new(Color::white(), &texture));
+
+    let b1 = TranslateBehavior {
+        value: 1.0,
+        axis: 1
+    };
+
+    let b2 = TranslateBehavior {
+        value: 1.0,
+        axis: 2
+    };
+
+    let mut node = Node::new("prova");
+
+    node.add_component(s_component);
+    node.add_behavior(b1);
+
+    scene.get_root().add_behavior(b2);
+    scene.get_root().add_node(node);
+    //scene.get_root().transform.position.x = 200.0;
+
+    //scene.get_node("prova").unwrap().transform.position.x = 1000.0;
+
+    scene
 }
 
 fn resize(new_size: Option<(i32, i32)>, option: &EngineOption) {
