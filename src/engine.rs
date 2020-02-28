@@ -1,22 +1,21 @@
 extern crate sdl2;
 extern crate gl;
 
+use crate::math::transform::Transform;
 use crate::behaviors::Behavior;
 use crate::gl_utilities::shader::Shader;
 use sdl2::VideoSubsystem;
 use serde::{Deserialize, Serialize};
 
-use sdl2::video::{GLProfile, DisplayMode, FullscreenType};
+use sdl2::video::{GLProfile, DisplayMode, FullscreenType, SwapInterval};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 
 use crate::gl_utilities::shader::{ShaderManager};
-use crate::graphics::texture::Texture;
+use crate::graphics::texture::TextureManager;
 
 use crate::math::matrix4x4::Matrix4x4;
 use crate::math::vector3::Vector3;
-use crate::graphics::sprite::Sprite;
-use crate::math::transform::Transform;
 use crate::graphics::color::Color;
 use crate::graphics::material::Material;
 
@@ -65,7 +64,7 @@ pub fn start(option: EngineOption) {
     gl_attr.set_context_profile(GLProfile::Core);
     gl_attr.set_context_version(4, 6);
     gl_attr.set_double_buffer(true);
-
+    
     let mut window = video_subsystem
         .window(
             option.title.as_ref(),
@@ -74,7 +73,7 @@ pub fn start(option: EngineOption) {
         )
         .opengl()
         .build()
-        .unwrap();
+        .unwrap();  
 
     if option.fullscreen {
         let display_mode = get_display_mode(&video_subsystem, &option);
@@ -84,6 +83,8 @@ pub fn start(option: EngineOption) {
 
     let _ctx = window.gl_create_context().unwrap();
     gl::load_with(|name| video_subsystem.gl_get_proc_address(name) as *const _);
+
+    video_subsystem.gl_set_swap_interval(SwapInterval::VSync).unwrap();
 
     unsafe {
         gl::Enable(gl::DEBUG_OUTPUT);
@@ -106,14 +107,17 @@ pub fn start(option: EngineOption) {
         include_str!("basic.frag")
     );
 
-    let texture1 = Texture::new("test.png");
-    let texture2 = Texture::new("duck.png");
+    /*let texture1 = Texture::new("test.png");
+    let texture2 = Texture::new("duck.png");*/
     
     let u_projection_location = basic_shader.get_uniform_location("u_projection");
 
-    let mut scene = create_scene(basic_shader, &texture1);
+    let mut tm = TextureManager::new();
+    let mut scene = create_scene(basic_shader);
+    
+    scene.declare_resource(&mut tm);   
 
-    scene.load();
+    scene.load(&tm);
 
     basic_shader.use_shader();
 
@@ -173,8 +177,6 @@ pub fn start(option: EngineOption) {
             );
 
             scene.render();
-
-            //sprite.draw(&transform.get_transformation_matrix());
         }
         window.gl_swap_window();
     }
@@ -199,10 +201,11 @@ impl Behavior for TranslateBehavior {
     }
 }
 
-fn create_scene<'a>(shader: &'a Shader, texture: &'a Texture) -> Scene<'a> {
+fn create_scene<'a>(shader: &'a Shader/*, texture: &'a Texture*/) -> Scene<'a> {
     let mut scene = Scene::new();
+    scene.resources.push(String::from("test.png"));
 
-    let s_component = SpriteComponent::new("Test", 200.0, 200.0, Vector3::one(), shader, Material::new(Color::white(), &texture));
+    let s_component = SpriteComponent::new("Test", 200.0, 200.0, Vector3::one(), shader, Material::new(Color::white(), "test.png"));
 
     let b1 = TranslateBehavior {
         value: 1.0,
@@ -221,9 +224,6 @@ fn create_scene<'a>(shader: &'a Shader, texture: &'a Texture) -> Scene<'a> {
 
     scene.get_root().add_behavior(b2);
     scene.get_root().add_node(node);
-    //scene.get_root().transform.position.x = 200.0;
-
-    //scene.get_node("prova").unwrap().transform.position.x = 1000.0;
 
     scene
 }

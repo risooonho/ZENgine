@@ -1,3 +1,4 @@
+use crate::graphics::texture::TextureManager;
 use crate::graphics::material::Material;
 use crate::math::matrix4x4::Matrix4x4;
 use crate::math::vector3::Vector3;
@@ -13,7 +14,7 @@ pub struct Sprite<'a> {
 
     origin: Vector3,
 
-    u_color_position: i32,  
+    u_color_location: i32,  
     u_model_location: i32,
     u_diffuse_location: i32,
 
@@ -32,7 +33,7 @@ impl<'a> Sprite<'a> {
 
             origin: Vector3::zero(),
 
-            u_color_position: shader.get_uniform_location("u_tint"),
+            u_color_location: shader.get_uniform_location("u_tint"),
             u_model_location: shader.get_uniform_location("u_model"),
             u_diffuse_location: shader.get_uniform_location("u_diffuse"),
 
@@ -54,7 +55,7 @@ impl<'a> Sprite<'a> {
         self.calculate_vertices();
     }
 
-    pub fn load(&mut self) {
+    pub fn load(&mut self, texture_manager: &'a TextureManager) {
         let a_position_location = self.shader.get_attribute_location("a_position");
         let a_tex_coord_location = self.shader.get_attribute_location("a_tex_coord");
 
@@ -73,6 +74,8 @@ impl<'a> Sprite<'a> {
         );
 
         self.calculate_vertices();
+
+        self.material.load(texture_manager);
     }
 
     pub fn calculate_vertices(&mut self) {
@@ -103,18 +106,9 @@ impl<'a> Sprite<'a> {
                 gl::FALSE,
                 model.data.as_ptr()
             );
-
-            gl::Uniform4f(
-                self.u_color_position,
-                self.material.tint.r,
-                self.material.tint.g,
-                self.material.tint.b,
-                self.material.tint.a
-            );
-
-            self.material.texture.activate();
-            gl::Uniform1i(self.u_diffuse_location, 0);
         }
+
+        self.material.use_material(self.u_color_location, self.u_diffuse_location);
 
         self.buffer.draw();
     }

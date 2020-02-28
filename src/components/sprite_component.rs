@@ -1,3 +1,4 @@
+use crate::graphics::texture::TextureManager;
 use crate::math::matrix4x4::Matrix4x4;
 use crate::components::Component;
 use crate::math::vector3::Vector3;
@@ -14,8 +15,8 @@ pub struct SpriteComponent<'a> {
 }
 
 impl<'a> Component<'a> for SpriteComponent<'a> {
-    fn load(&mut self) {
-        self.sprite.load();
+    fn load(&mut self, texture_manager: &'a TextureManager) {
+        self.sprite.load(texture_manager);
     }
 
     fn render(&self, owner_world_matrix: &Matrix4x4) {

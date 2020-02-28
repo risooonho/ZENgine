@@ -1,13 +1,19 @@
+use crate::graphics::texture::TextureManager;
+use crate::graphics::texture::Texture;
+use crate::gl_utilities::shader::Shader;
 use crate::world::node::Node;
 
 pub struct Scene<'a> {
     pub root: Node<'a>,
+
+    pub resources: Vec<String>
 }
 
 impl<'a> Scene<'a> {
     pub fn new() -> Scene<'a> {
         Scene {
-            root: Node::new("ROOT")
+            root: Node::new("ROOT"),
+            resources: Vec::new()
         }
     }
 
@@ -25,8 +31,14 @@ impl<'a> Scene<'a> {
         None
     }
 
-    pub fn load(&mut self) {
-        self.root.load();
+    pub fn declare_resource(&self, texture_manager: &mut TextureManager) {
+        for r in self.resources.iter() {
+            texture_manager.register(r);
+        }        
+    }
+
+    pub fn load(&mut self, texture_manager: &'a TextureManager) {
+        self.root.load(texture_manager);
     }
 
     pub fn update(&mut self) {
