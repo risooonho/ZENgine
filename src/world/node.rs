@@ -59,7 +59,7 @@ impl<'a> Node<'a> {
         }
     }
 
-    pub fn update(&mut self, parent_world: Option<&Matrix4x4>) {
+    pub fn update(&mut self, time: f32, parent_world: Option<&Matrix4x4>) {
 
         self.local_matrix = self.transform.get_transformation_matrix();
         match parent_world {
@@ -72,11 +72,11 @@ impl<'a> Node<'a> {
         }
 
         for b in self.behaviors.iter_mut() {
-            b.update(&mut self.transform);
+            b.update(time, &mut self.transform);
         }
 
         for n in self.children.iter_mut() {
-            n.update(Some(&self.world_matrix));
+            n.update(time, Some(&self.world_matrix));
         }
     }
 

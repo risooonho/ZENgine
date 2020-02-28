@@ -3,13 +3,15 @@ extern crate gl;
 
 use crate::math::transform::Transform;
 use crate::behaviors::Behavior;
-use crate::gl_utilities::shader::Shader;
 use sdl2::VideoSubsystem;
 use serde::{Deserialize, Serialize};
 
 use sdl2::video::{GLProfile, DisplayMode, FullscreenType, SwapInterval};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
+
+use std::{thread};
+use std::time::{Duration, Instant};
 
 use crate::world::manager::Manager;
 
@@ -49,7 +51,8 @@ pub struct EngineOption {
     pub virtual_width: u32,
     pub virtual_height: u32,
     pub screen_width: u32,
-    pub screen_height: u32
+    pub screen_height: u32,
+    pub fps: u32
 }
 
 pub fn start(option: EngineOption) {
@@ -111,10 +114,16 @@ pub fn start(option: EngineOption) {
     manager.shaders.get("basic").use_shader();
 
     resize(None, &option);
-
+    
     let mut event_pump = sdl_context.event_pump().unwrap();
+    
+    let mut start_loop_time = Instant::now();
+    let mut end_loop_time = None;
+    let sec_per_frame = 1.0 / option.fps as f32;    
 
     'main_loop: loop {
+        start_loop_time = Instant::now();
+
         for event in event_pump.poll_iter() {
             match event {
                 Event::Quit {..} => {
@@ -145,7 +154,12 @@ pub fn start(option: EngineOption) {
             }
         }
 
-        scene.update();
+        let delta = match end_loop_time {
+            Some(end_loop_time) => start_loop_time.duration_since(end_loop_time).as_secs_f32(),
+            None => sec_per_frame
+        };
+
+        scene.update(delta);
 
         unsafe {
             gl::Disable(gl::SCISSOR_TEST);
@@ -168,6 +182,16 @@ pub fn start(option: EngineOption) {
             scene.render();
         }
         window.gl_swap_window();
+
+        end_loop_time = Some(Instant::now());
+
+        let loop_time = end_loop_time.unwrap().duration_since(start_loop_time).as_secs_f32();
+        let sleep_for = sec_per_frame - loop_time;        
+        if sleep_for > 0.0 {
+            thread::sleep(Duration::from_secs_f32(sleep_for));
+        }
+        
+        println!("Limitless FPS {} - current FPS {} - loop_time {} - sleeped for {} - delta {}", 1.0 / loop_time, 1.0 / (loop_time + sleep_for), loop_time, sleep_for, delta);
     }
 }
 
@@ -177,41 +201,42 @@ struct TranslateBehavior {
 }
 
 impl Behavior for TranslateBehavior {
-    fn update(&self, owner_transform: &mut Transform) {
+    fn update(&self, time: f32, owner_transform: &mut Transform) {
         if self.axis == 1 {
-            owner_transform.position.x += self.value;
+            owner_transform.position.x += self.value * time as f32;
         }
         if self.axis == 2 {
-            owner_transform.position.y += self.value;
+            owner_transform.position.y += self.value * time as f32;
         }
         if self.axis == 3 {
-            owner_transform.position.z += self.value;
+            owner_transform.position.z += self.value * time as f32;
         }
     }
 }
 
 fn create_scene<'a>() -> Scene<'a> {
     let mut scene = Scene::new();
-    scene.resources.push(String::from("test.png"));
+    scene.textures.push((String::from("test"), String::from("duck.png")));
 
-    let s_component = SpriteComponent::new("Test", 200.0, 200.0, Vector3::one(), "basic", Material::new(Color::white(), "test.png"));
+    let s_component = SpriteComponent::new("Test", 200.0, 200.0, Vector3::one(), "basic", Material::new(Color::white(), "test"));
 
     let b1 = TranslateBehavior {
-        value: 1.0,
+        value: 100.0,
         axis: 1
     };
 
     let b2 = TranslateBehavior {
-        value: 1.0,
+        value: 100.0,
         axis: 2
     };
 
     let mut node = Node::new("prova");
+    node.transform.position.y = 300.0;
 
     node.add_component(s_component);
     node.add_behavior(b1);
 
-    scene.get_root().add_behavior(b2);
+    //scene.get_root().add_behavior(b2);
     scene.get_root().add_node(node);
 
     scene

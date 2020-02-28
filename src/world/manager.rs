@@ -59,8 +59,8 @@ impl TextureManager {
         }
     }
 
-    pub fn register(&mut self, texture_name: &str) {
-        self.textures.insert(String::from(texture_name), Texture::new(texture_name));
+    pub fn register(&mut self, texture_name: &str, file_name: &str) {
+        self.textures.insert(String::from(texture_name), Texture::new(file_name));
     }
 
     pub fn get(&self, texture_name: &str) -> &Texture {
@@ -73,8 +73,6 @@ impl TextureManager {
     }
 
     pub fn release(&mut self, texture_name: &str) {
-        let t = self.get(texture_name);
-
         self.textures.remove(texture_name);
     }
 }

@@ -9,7 +9,8 @@ fn main() {
             virtual_width: 1920,
             virtual_height: 1080,
             screen_width: 800,
-            screen_height: 600
+            screen_height: 600,
+            fps: 60
         }
     );
 

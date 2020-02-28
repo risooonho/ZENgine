@@ -4,14 +4,14 @@ use crate::world::node::Node;
 pub struct Scene<'a> {
     pub root: Node<'a>,
 
-    pub resources: Vec<String>
+    pub textures: Vec<(String, String)>
 }
 
 impl<'a> Scene<'a> {
     pub fn new() -> Scene<'a> {
         Scene {
             root: Node::new("ROOT"),
-            resources: Vec::new()
+            textures: Vec::new()
         }
     }
 
@@ -30,8 +30,8 @@ impl<'a> Scene<'a> {
     }
 
     pub fn declare_resource(&self, manager: &mut Manager) {
-        for r in self.resources.iter() {
-            manager.textures.register(r);
+        for t in self.textures.iter() {
+            manager.textures.register(&t.0, &t.1);
         }        
     }
 
@@ -39,8 +39,8 @@ impl<'a> Scene<'a> {
         self.root.load(manager);
     }
 
-    pub fn update(&mut self) {
-        self.root.update(None);
+    pub fn update(&mut self, time: f32) {
+        self.root.update(time, None);
     }
 
     pub fn render(&self) {
