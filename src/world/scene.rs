@@ -1,6 +1,4 @@
-use crate::graphics::texture::TextureManager;
-use crate::graphics::texture::Texture;
-use crate::gl_utilities::shader::Shader;
+use crate::world::manager::Manager;
 use crate::world::node::Node;
 
 pub struct Scene<'a> {
@@ -31,14 +29,14 @@ impl<'a> Scene<'a> {
         None
     }
 
-    pub fn declare_resource(&self, texture_manager: &mut TextureManager) {
+    pub fn declare_resource(&self, manager: &mut Manager) {
         for r in self.resources.iter() {
-            texture_manager.register(r);
+            manager.textures.register(r);
         }        
     }
 
-    pub fn load(&mut self, texture_manager: &'a TextureManager) {
-        self.root.load(texture_manager);
+    pub fn load(&mut self, manager: &'a Manager) {
+        self.root.load(manager);
     }
 
     pub fn update(&mut self) {

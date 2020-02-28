@@ -1,4 +1,3 @@
-use crate::graphics::texture::TextureManager;
 use crate::graphics::texture::Texture;
 use crate::graphics::color::Color;
 
@@ -17,8 +16,8 @@ impl<'a> Material<'a> {
         }
     }
 
-    pub fn load(&mut self, texture_manager: &'a TextureManager) {
-        self.texture = Some(texture_manager.get(&self.texture_name));
+    pub fn load(&mut self, texture: &'a Texture) {
+        self.texture = Some(texture);
     }
 
     pub fn use_material(&self, color_location: i32, diffuse_location: i32) {

@@ -1,8 +1,7 @@
-use crate::graphics::texture::TextureManager;
+use crate::world::manager::Manager;
 use crate::math::matrix4x4::Matrix4x4;
 use crate::components::Component;
 use crate::math::vector3::Vector3;
-use crate::gl_utilities::shader::Shader;
 use crate::graphics::material::Material;
 use crate::graphics::sprite::Sprite;
 
@@ -15,8 +14,11 @@ pub struct SpriteComponent<'a> {
 }
 
 impl<'a> Component<'a> for SpriteComponent<'a> {
-    fn load(&mut self, texture_manager: &'a TextureManager) {
-        self.sprite.load(texture_manager);
+    fn load(&mut self, manager: &'a Manager) {
+        self.sprite.load(
+            manager.shaders.get(&self.sprite.shader_name),
+            manager.textures.get(&self.sprite.material.texture_name)
+        );
     }
 
     fn render(&self, owner_world_matrix: &Matrix4x4) {
@@ -25,13 +27,13 @@ impl<'a> Component<'a> for SpriteComponent<'a> {
 }
 
 impl<'a> SpriteComponent<'a> {
-    pub fn new(name: &str, width: f32, height: f32, origin: Vector3, shader: &'a Shader, material: Material<'a>) -> SpriteComponent<'a> {
+    pub fn new(name: &str, width: f32, height: f32, origin: Vector3, shader_name: &str, material: Material<'a>) -> SpriteComponent<'a> {
         let mut c = SpriteComponent {
             name: String::from(name),
 
             origin: origin,
 
-            sprite: Sprite::new(shader, material, Some(width), Some(height))
+            sprite: Sprite::new(shader_name, material, Some(width), Some(height))
         };
 
         c.sprite.set_origin(c.origin);

@@ -11,8 +11,7 @@ use sdl2::video::{GLProfile, DisplayMode, FullscreenType, SwapInterval};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 
-use crate::gl_utilities::shader::{ShaderManager};
-use crate::graphics::texture::TextureManager;
+use crate::world::manager::Manager;
 
 use crate::math::matrix4x4::Matrix4x4;
 use crate::math::vector3::Vector3;
@@ -99,27 +98,17 @@ pub fn start(option: EngineOption) {
 
     let projection = Matrix4x4::orthographics(0.0, option.virtual_width as f32, 0.0, option.virtual_height as f32, -100.0, 100.0);
 
-    let mut shader_manager = ShaderManager::init();
+    let mut manager = Manager::new();
     
-    let basic_shader = shader_manager.register(
-        "basic", 
-        include_str!("basic.vert"), 
-        include_str!("basic.frag")
-    );
+    let u_projection_location = manager.shaders.get("basic").get_uniform_location("u_projection");
 
-    /*let texture1 = Texture::new("test.png");
-    let texture2 = Texture::new("duck.png");*/
+    let mut scene = create_scene();
     
-    let u_projection_location = basic_shader.get_uniform_location("u_projection");
+    scene.declare_resource(&mut manager);   
 
-    let mut tm = TextureManager::new();
-    let mut scene = create_scene(basic_shader);
-    
-    scene.declare_resource(&mut tm);   
+    scene.load(&manager);
 
-    scene.load(&tm);
-
-    basic_shader.use_shader();
+    manager.shaders.get("basic").use_shader();
 
     resize(None, &option);
 
@@ -201,11 +190,11 @@ impl Behavior for TranslateBehavior {
     }
 }
 
-fn create_scene<'a>(shader: &'a Shader/*, texture: &'a Texture*/) -> Scene<'a> {
+fn create_scene<'a>() -> Scene<'a> {
     let mut scene = Scene::new();
     scene.resources.push(String::from("test.png"));
 
-    let s_component = SpriteComponent::new("Test", 200.0, 200.0, Vector3::one(), shader, Material::new(Color::white(), "test.png"));
+    let s_component = SpriteComponent::new("Test", 200.0, 200.0, Vector3::one(), "basic", Material::new(Color::white(), "test.png"));
 
     let b1 = TranslateBehavior {
         value: 1.0,

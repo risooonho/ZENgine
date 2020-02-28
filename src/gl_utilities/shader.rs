@@ -1,7 +1,7 @@
 use std::ffi::CString;
 use std::collections::HashMap;
+use crate::assets::text_loader;
 use std::str::FromStr;
-use std::sync::atomic::{AtomicBool, Ordering};
 
 fn create_whitespace_cstring_with_len(len: usize) -> CString {
     // allocate buffer of correct size
@@ -10,53 +10,6 @@ fn create_whitespace_cstring_with_len(len: usize) -> CString {
     buffer.extend([b' '].iter().cycle().take(len));
     // convert buffer to CString
     unsafe { CString::from_vec_unchecked(buffer) }
-}
-
-/// Only one ShaderManager can be alive at time
-/// Set to false by default (not alive)
-static IS_SHADER_MANAGER_ALIVE: AtomicBool = AtomicBool::new(false);
-
-pub struct ShaderManager {
-    shaders: HashMap<String, Shader>
-}
-
-impl ShaderManager {
-    pub fn init() -> ShaderManager {
-        let was_alive = IS_SHADER_MANAGER_ALIVE.swap(true, Ordering::Relaxed);
-
-        if !was_alive {
-            ShaderManager {
-                shaders: HashMap::new()
-            }
-        } else {
-            panic!("Cannot create two instance of AssetManager");
-        }        
-    }
-
-    pub fn register(&mut self, name: &str, vert_source: &str, frag_source: &str) -> &Shader {
-        let mut shader = Shader {
-            name: String::from(name),
-            program: 0,
-            attributes: HashMap::new(),
-            uniforms: HashMap::new()
-        };
-
-        shader.load(
-            &CString::new(vert_source).expect("CString::new failed"),
-            &CString::new(frag_source).expect("CString::new failed"),
-        );
-
-        self.shaders.insert(String::from(name), shader);
-
-        self.get(name)
-    }
-
-    pub fn get(&self, name: &str) -> &Shader {
-        match self.shaders.get(name) {
-            Some(shader) => return shader,
-            _ => panic!("Unable to find shader {}", name)
-        };
-    }
 }
 
 pub struct Shader {
@@ -76,6 +29,38 @@ impl Drop for Shader {
 }
 
 impl Shader {
+    pub fn new(name: &str) -> Shader {
+        let mut shader = Shader {
+            name: String::from(name),
+            program: 0,
+            attributes: HashMap::new(),
+            uniforms: HashMap::new()
+        };
+
+        shader.load(
+            &CString::new(text_loader::load(&format!("{}.vert", name)).data).expect("CString::new failed"),
+            &CString::new(text_loader::load(&format!("{}.frag", name)).data).expect("CString::new failed"),
+        );
+
+        shader
+    }
+
+    pub fn create_basic_shader() -> Shader {
+        let mut shader = Shader {
+            name: String::from("basic"),
+            program: 0,
+            attributes: HashMap::new(),
+            uniforms: HashMap::new()
+        };
+
+        shader.load(
+            &CString::new(include_str!("../basic.vert")).expect("CString::new failed"),
+            &CString::new(include_str!("../basic.frag")).expect("CString::new failed"),
+        );
+
+        shader
+    }
+
     pub fn use_shader(&self) {
         unsafe {
             gl::UseProgram(self.program);

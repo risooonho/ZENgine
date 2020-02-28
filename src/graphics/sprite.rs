@@ -1,4 +1,4 @@
-use crate::graphics::texture::TextureManager;
+use crate::graphics::texture::Texture;
 use crate::graphics::material::Material;
 use crate::math::matrix4x4::Matrix4x4;
 use crate::math::vector3::Vector3;
@@ -21,27 +21,28 @@ pub struct Sprite<'a> {
     buffer: GLBuffer,
     vertices: [Vertex; 6],
 
-    shader: &'a Shader,
-    material: Material<'a>
+    pub material: Material<'a>,
+
+    pub shader_name: String
 }
 
 impl<'a> Sprite<'a> {
-    pub fn new(shader: &'a Shader, material: Material<'a>, width: Option<f32>, height: Option<f32>) -> Sprite<'a> {
+    pub fn new(shader_name: &str, material: Material<'a>, width: Option<f32>, height: Option<f32>) -> Sprite<'a> {
         Sprite {
+            shader_name: String::from(shader_name),
             width: match width { Some(w) => w, _ => 10.0 },
             height: match height { Some(h) => h, _ => 10.0 },
 
             origin: Vector3::zero(),
 
-            u_color_location: shader.get_uniform_location("u_tint"),
-            u_model_location: shader.get_uniform_location("u_model"),
-            u_diffuse_location: shader.get_uniform_location("u_diffuse"),
+            u_color_location: -1,
+            u_model_location: -1,
+            u_diffuse_location: -1,
 
             buffer: GLBuffer::new(),
 
             vertices: [Vertex::new(0.0, 0.0, 0.0, 0.0, 0.0); 6],
 
-            shader: shader,
             material: material
         }
     }
@@ -55,9 +56,13 @@ impl<'a> Sprite<'a> {
         self.calculate_vertices();
     }
 
-    pub fn load(&mut self, texture_manager: &'a TextureManager) {
-        let a_position_location = self.shader.get_attribute_location("a_position");
-        let a_tex_coord_location = self.shader.get_attribute_location("a_tex_coord");
+    pub fn load(&mut self, shader: &Shader, texture: &'a Texture) {
+        let a_position_location = shader.get_attribute_location("a_position");
+        let a_tex_coord_location = shader.get_attribute_location("a_tex_coord");
+
+        self.u_color_location = shader.get_uniform_location("u_tint");
+        self.u_model_location = shader.get_uniform_location("u_model");
+        self.u_diffuse_location = shader.get_uniform_location("u_diffuse");
 
         self.buffer.configure(
             vec![
@@ -75,7 +80,7 @@ impl<'a> Sprite<'a> {
 
         self.calculate_vertices();
 
-        self.material.load(texture_manager);
+        self.material.load(texture);
     }
 
     pub fn calculate_vertices(&mut self) {

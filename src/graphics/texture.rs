@@ -1,42 +1,7 @@
-use std::collections::HashMap;
 use crate::assets::image_loader;
 
 const LEVEL: i32 = 0;
 const BORDER: i32 = 0;
-
-pub struct TextureManager {
-    pub textures: HashMap<String, Texture>
-}
-
-impl TextureManager {
-    pub fn new() -> TextureManager {
-        TextureManager {
-            textures: HashMap::new()
-        }
-    }
-
-    pub fn register(&mut self, texture_name: &str) {
-        self.textures.insert(String::from(texture_name), Texture::new(texture_name));
-    }
-
-    pub fn get(&self, texture_name: &str) -> &Texture {
-        match self.textures.get(texture_name) {
-            Some(texture) => texture,
-            None => {
-                panic!("Texture with name {} not found", texture_name)
-            }
-        }
-    }
-
-    pub fn release(&mut self, texture_name: &str) {
-        let t = self.get(texture_name);
-        unsafe {
-            gl::DeleteTextures(1, &t.texture_id);
-        }
-
-        self.textures.remove(texture_name);
-    }
-}
 
 pub struct Texture {
     name: String,

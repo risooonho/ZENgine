@@ -1,5 +1,4 @@
-use crate::graphics::texture::Texture;
-use crate::graphics::texture::TextureManager;
+use crate::world::manager::Manager;
 use crate::components::Component;
 use crate::behaviors::Behavior;
 use crate::math::matrix4x4::Matrix4x4;
@@ -50,13 +49,13 @@ impl<'a> Node<'a> {
         self.behaviors.push(Box::new(behavior));
     }
 
-    pub fn load(&mut self, texture_manager: &'a TextureManager) {
+    pub fn load(&mut self, manager: &'a Manager) {
         for c in self.components.iter_mut() {
-            c.load(texture_manager)
+            c.load(manager)
         }
 
         for n in self.children.iter_mut() {
-            n.load(texture_manager)
+            n.load(manager)
         }
     }
 
