@@ -2,17 +2,18 @@ extern crate sdl2;
 extern crate gl;
 
 use sdl2::VideoSubsystem;
-use serde::{Deserialize, Serialize};
 use sdl2::video::{GLProfile, DisplayMode, FullscreenType, SwapInterval};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use std::{thread};
 use std::time::{Duration, Instant};
 use std::collections::HashMap;
+use serde::{Deserialize};
 
 use crate::world::manager::Manager;
 use crate::math::matrix4x4::Matrix4x4;
 use crate::world::scene::Scene;
+use crate::assets::text_loader;
 
 extern "system" fn dbg_callback(
     source: gl::types::GLenum,
@@ -34,7 +35,7 @@ extern "system" fn dbg_callback(
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Deserialize)]
 pub struct EngineOption {
     pub title: String,
     pub fullscreen: bool,
@@ -45,10 +46,23 @@ pub struct EngineOption {
     pub fps: u32
 }
 
+#[derive(Deserialize)]
+pub struct DeclarationItem {
+    pub name: String,
+    pub file: String
+}
+
+#[derive(Deserialize, Default)]
+pub struct ResourceDeclaration {
+    #[serde(default)]
+    pub shaders: Vec<DeclarationItem>,
+    #[serde(default)]
+    pub textures: Vec<DeclarationItem>
+}
+
 pub fn start(
     option: EngineOption, 
-    shaders_declaration: Option<Vec<(String, String)>>, 
-    textures_declaration: Option<Vec<(String, String)>>,
+    resources_declaration: ResourceDeclaration,
     scenes_declaration: Vec<(String, fn(&mut Scene))>,
     first_scene: &str
 ) {
@@ -99,17 +113,13 @@ pub fn start(
 
     let mut manager = Manager::new();
 
-    if let Some(shaders_declaration) = shaders_declaration {
-        for t in shaders_declaration.iter() {
-            manager.shaders.register(&t.0, &t.1);
-        }
-    }  
+    for t in resources_declaration.shaders.iter() {
+        manager.shaders.register(&t.name, &t.file);
+    }
 
-    if let Some(textures_declaration) = textures_declaration {
-        for t in textures_declaration.iter() {
-            manager.textures.register(&t.0, &t.1);
-        }
-    } 
+    for t in resources_declaration.textures.iter() {
+        manager.textures.register(&t.name, &t.file);
+    }
     
     let mut scenes = HashMap::new();
     for s in scenes_declaration.iter() {
@@ -251,4 +261,14 @@ fn get_display_mode(video_subsystem: &VideoSubsystem, option: &EngineOption) -> 
     }
 
     panic!("No DisplayMode available for width {} and height {}", option.screen_width, option.screen_height);
+}
+
+pub fn option_from_json(json_file: &str) -> EngineOption {
+    let option_json = text_loader::load(json_file);
+    serde_json::from_str(&option_json.data).unwrap()
+}
+
+pub fn resources_declaration_from_json(json_file: &str) -> ResourceDeclaration {
+    let resources_json = text_loader::load(json_file);
+    serde_json::from_str(&resources_json.data).unwrap()
 }

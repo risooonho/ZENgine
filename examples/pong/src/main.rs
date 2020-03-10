@@ -1,10 +1,14 @@
 extern crate zengine;
 
+use serde::{Serialize, Deserialize};
+
+use zengine::assets::text_loader;
 use zengine::world::scene::Scene;
 use zengine::world::node::Node;
 use zengine::components::sprite_component::SpriteComponent;
 use zengine::math::transform::Transform;
 use zengine::graphics::material::Material;
+use zengine::graphics::texture::TextureDeclaration;
 use zengine::math::vector3::Vector3;
 use zengine::behaviors::Behavior;
 use zengine::graphics::color::Color;
@@ -14,21 +18,8 @@ use std::collections::HashMap;
 fn main() {
 
     zengine::engine::start(
-        zengine::engine::EngineOption {
-            title: String::from("PONG"),
-            fullscreen: false,
-            virtual_width: 1920,
-            virtual_height: 1080,
-            screen_width: 800,
-            screen_height: 600,
-            fps: 60
-        },
-        None,
-        Some(
-            vec![
-                (String::from("test"), String::from("duck.png"))
-            ]
-        ),
+        zengine::engine::option_from_json("option.json"),
+        zengine::engine::resources_declaration_from_json("option.json"),
         vec![
             (String::from("test"), declare_scene)
         ],
@@ -56,7 +47,9 @@ impl Behavior for TranslateBehavior {
 }
 
 fn declare_scene(scene: &mut Scene) {
-    let s_component = SpriteComponent::new("Test", 200.0, 200.0, Vector3::one(), "basic", Material::new(Color::white(), "test"));
+    scene.declare_from_json("scenes/test.json");
+
+    let s_component = SpriteComponent::new("Test", 200.0, 200.0, Vector3::one(), "basic", Material::new(Color::white(), "duck"));
 
     let b1 = TranslateBehavior {
         value: 100.0,
@@ -68,12 +61,13 @@ fn declare_scene(scene: &mut Scene) {
         axis: 2
     };
 
-    let mut node = Node::new("prova");
+    /*let mut node = Node::new("prova");
     node.transform.position.y = 300.0;
 
     node.add_component(s_component);
-    node.add_behavior(b1);
+    node.add_behavior(b1);*/
 
-    scene.get_root().add_behavior(b2);
-    scene.get_root().add_node(node);
+    scene.get_root().add_component(s_component);
+    scene.get_root().add_behavior(b1);
+    //scene.get_root().add_node(node);
 }

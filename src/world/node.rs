@@ -1,21 +1,33 @@
+use serde::{Deserialize};
+
 use crate::world::manager::Manager;
 use crate::components::Component;
 use crate::behaviors::Behavior;
 use crate::math::matrix4x4::Matrix4x4;
 use crate::math::transform::Transform;
 
+#[derive(Deserialize)]
 pub struct Node<'a> {
     pub name: String,
 
+    #[serde(default)]
     pub children: Vec<Node<'a>>,
 
-    pub is_visible: bool,
+    #[serde(default)]
+    pub visible: bool,
 
+    #[serde(default)]
     pub transform: Transform,
+
+    #[serde(skip_deserializing)]
     pub local_matrix: Matrix4x4,
+
+    #[serde(skip_deserializing)]
     pub world_matrix: Matrix4x4,
 
+    #[serde(skip_deserializing)]
     pub components: Vec<Box<dyn Component<'a> + 'a>>,
+    #[serde(skip_deserializing)]
     pub behaviors: Vec<Box<dyn Behavior + 'a>>
 }
 
@@ -26,7 +38,7 @@ impl<'a> Node<'a> {
 
             children: Vec::new(),
 
-            is_visible: true,
+            visible: true,
 
             transform: Transform::new(),
             local_matrix: Matrix4x4::identity(),
@@ -81,7 +93,7 @@ impl<'a> Node<'a> {
     }
 
     pub fn render(&self) {
-        if self.is_visible {
+        if self.visible {
             for c in self.components.iter() {
                 c.render(&self.world_matrix);
             }

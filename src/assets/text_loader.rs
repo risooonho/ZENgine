@@ -9,7 +9,7 @@ pub fn load(text_name: &str) -> TextAsset {
         Ok(mut absolute_path) => {
             absolute_path.pop();
 
-            absolute_path.push("assets/text/");
+            absolute_path.push("assets/");
             absolute_path.push(text_name);
 
             match fs::read_to_string(absolute_path) {

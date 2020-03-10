@@ -1,4 +1,3 @@
-use crate::world::scene::Scene;
 use crate::graphics::texture::Texture;
 use crate::gl_utilities::shader::Shader;
 use std::collections::HashMap;

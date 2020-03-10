@@ -2,6 +2,7 @@ use std::ffi::CString;
 use std::collections::HashMap;
 use crate::assets::text_loader;
 use std::str::FromStr;
+use serde::{Deserialize};
 
 fn create_whitespace_cstring_with_len(len: usize) -> CString {
     // allocate buffer of correct size
@@ -10,6 +11,13 @@ fn create_whitespace_cstring_with_len(len: usize) -> CString {
     buffer.extend([b' '].iter().cycle().take(len));
     // convert buffer to CString
     unsafe { CString::from_vec_unchecked(buffer) }
+}
+
+#[derive(Deserialize)]
+pub struct ShaderDeclaration {
+    pub name: String,
+
+    pub source: String
 }
 
 pub struct Shader {
@@ -38,8 +46,8 @@ impl Shader {
         };
 
         shader.load(
-            &CString::new(text_loader::load(&format!("{}.vert", name)).data).expect("CString::new failed"),
-            &CString::new(text_loader::load(&format!("{}.frag", name)).data).expect("CString::new failed"),
+            &CString::new(text_loader::load(&format!("shaders/{}.vert", name)).data).expect("CString::new failed"),
+            &CString::new(text_loader::load(&format!("shaders/{}.frag", name)).data).expect("CString::new failed"),
         );
 
         shader

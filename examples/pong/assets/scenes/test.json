@@ -1,0 +1,17 @@
+{
+    "name": "test",
+    "resources": {
+        "textures": [
+            { "name": "duck", "file": "duck.png" }
+        ]
+    },
+    "root": {
+        "name": "Duck",
+        "visible": true,
+        "transform": {
+            "position": {
+                "y": 300
+            }
+        }
+    } 
+}

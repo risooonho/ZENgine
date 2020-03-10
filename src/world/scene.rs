@@ -1,20 +1,26 @@
+use crate::engine::ResourceDeclaration;
+use serde::{Deserialize};
+
 use crate::world::manager::Manager;
 use crate::world::node::Node;
+use crate::assets::text_loader;
 
+#[derive(Deserialize)]
 pub struct Scene<'a> {
     pub name: String,
 
-    pub root: Node<'a>,
+    #[serde(default)]
+    pub resources: ResourceDeclaration,
 
-    pub textures: Vec<(String, String)>
+    pub root: Node<'a>
 }
 
 impl<'a> Scene<'a> {
     pub fn new(name: &str) -> Scene<'a> {
         Scene {
             name: String::from(name),
-            root: Node::new("ROOT"),
-            textures: Vec::new()
+            resources: ResourceDeclaration::default(),
+            root: Node::new("ROOT")
         }
     }
 
@@ -33,8 +39,12 @@ impl<'a> Scene<'a> {
     }
 
     pub fn declare_resource(&self, manager: &mut Manager) {
-        for t in self.textures.iter() {
-            manager.textures.register(&t.0, &t.1);
+        for s in self.resources.shaders.iter() {
+            manager.shaders.register(&s.name, &s.file);
+        }
+
+        for t in self.resources.textures.iter() {
+            manager.textures.register(&t.name, &t.file);
         }        
     }
 
@@ -48,6 +58,15 @@ impl<'a> Scene<'a> {
 
     pub fn render(&self) {
         self.root.render();
+    }
+
+    pub fn declare_from_json(&mut self, json_file: &str) {
+        let scene_json = text_loader::load(json_file);
+        let scene_deserialized: Scene = serde_json::from_str(&scene_json.data).unwrap();
+
+        self.name = scene_deserialized.name;
+        self.resources = scene_deserialized.resources;
+        self.root = scene_deserialized.root;
     }
 
 /*

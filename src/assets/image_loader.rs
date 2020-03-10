@@ -14,7 +14,7 @@ pub fn load(image_name: &str) -> ImageAsset {
         Ok(mut absolute_path) => {
             absolute_path.pop();
 
-            absolute_path.push("assets/images/");
+            absolute_path.push("assets/");
             absolute_path.push(image_name);
 
             match image::open(absolute_path) {

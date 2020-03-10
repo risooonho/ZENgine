@@ -1,9 +1,15 @@
+use serde::{Deserialize};
+
 use crate::math::matrix4x4::Matrix4x4;
 use crate::math::vector3::Vector3;
 
+#[derive(Deserialize, Default)]
 pub struct Transform {
+    #[serde(default)]
     pub position: Vector3,
+    #[serde(default)]
     pub rotation: Vector3,
+    #[serde(default = "Vector3::one")]
     pub scale: Vector3
 }
 

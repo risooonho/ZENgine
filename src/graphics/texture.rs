@@ -1,7 +1,16 @@
+use serde::{Deserialize};
+
 use crate::assets::image_loader;
 
 const LEVEL: i32 = 0;
 const BORDER: i32 = 0;
+
+#[derive(Deserialize)]
+pub struct TextureDeclaration {
+    pub name: String,
+
+    pub image: String
+}
 
 pub struct Texture {
     name: String,
@@ -23,7 +32,7 @@ impl Drop for Texture {
 
 impl Texture {
     pub fn new(image_name: &str) -> Texture {
-        let img = image_loader::load(image_name);
+        let img = image_loader::load(&format!("images/{}", image_name));
 
         let mut t = Texture {
             name: String::from(image_name),

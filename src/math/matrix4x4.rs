@@ -6,6 +6,12 @@ pub struct Matrix4x4 {
     pub data: [f32; 16]
 }
 
+impl Default for Matrix4x4 {
+    fn default() -> Self {
+        Matrix4x4::identity()
+    }
+}
+
 impl_op_ex!(* |a: &Matrix4x4, b: &Matrix4x4| -> Matrix4x4 {
     let mut m = Matrix4x4::identity();
 

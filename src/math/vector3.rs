@@ -1,7 +1,12 @@
-#[derive(Copy, Clone)]
+use serde::{Deserialize};
+
+#[derive(Copy, Clone, Deserialize, Default)]
 pub struct Vector3 {
+    #[serde(default)]
     pub x: f32,
+    #[serde(default)]
     pub y: f32,
+    #[serde(default)]
     pub z: f32
 }
 
