@@ -2,14 +2,17 @@ use crate::world::manager::Manager;
 use crate::world::node::Node;
 
 pub struct Scene<'a> {
+    pub name: String,
+
     pub root: Node<'a>,
 
     pub textures: Vec<(String, String)>
 }
 
 impl<'a> Scene<'a> {
-    pub fn new() -> Scene<'a> {
+    pub fn new(name: &str) -> Scene<'a> {
         Scene {
+            name: String::from(name),
             root: Node::new("ROOT"),
             textures: Vec::new()
         }

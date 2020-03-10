@@ -1,3 +1,4 @@
+use crate::world::scene::Scene;
 use crate::graphics::texture::Texture;
 use crate::gl_utilities::shader::Shader;
 use std::collections::HashMap;
@@ -22,22 +23,22 @@ pub struct ShaderManager {
 
 impl ShaderManager {
     pub fn new() -> ShaderManager {        
-        let mut s = ShaderManager {
+        let mut sm = ShaderManager {
             shaders: HashMap::new()
         };
 
-        s.shaders.insert(
+        sm.shaders.insert(
             String::from("basic"), 
             Shader::create_basic_shader()
         );
 
-        s
+        sm
     }
 
-    pub fn register(&mut self, name: &str) -> &Shader {
-        self.shaders.insert(String::from(name), Shader::new(name));
+    pub fn register(&mut self, shader_name: &str, shader_file: &str) -> &Shader {
+        self.shaders.insert(String::from(shader_name), Shader::new(shader_file));
 
-        self.get(name)
+        self.get(shader_name)
     }
 
     pub fn get(&self, name: &str) -> &Shader {

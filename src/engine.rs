@@ -1,28 +1,18 @@
 extern crate sdl2;
 extern crate gl;
 
-use crate::math::transform::Transform;
-use crate::behaviors::Behavior;
 use sdl2::VideoSubsystem;
 use serde::{Deserialize, Serialize};
-
 use sdl2::video::{GLProfile, DisplayMode, FullscreenType, SwapInterval};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
-
 use std::{thread};
 use std::time::{Duration, Instant};
+use std::collections::HashMap;
 
 use crate::world::manager::Manager;
-
 use crate::math::matrix4x4::Matrix4x4;
-use crate::math::vector3::Vector3;
-use crate::graphics::color::Color;
-use crate::graphics::material::Material;
-
 use crate::world::scene::Scene;
-use crate::world::node::Node;
-use crate::components::sprite_component::SpriteComponent;
 
 extern "system" fn dbg_callback(
     source: gl::types::GLenum,
@@ -55,7 +45,13 @@ pub struct EngineOption {
     pub fps: u32
 }
 
-pub fn start(option: EngineOption) {
+pub fn start(
+    option: EngineOption, 
+    shaders_declaration: Option<Vec<(String, String)>>, 
+    textures_declaration: Option<Vec<(String, String)>>,
+    scenes_declaration: Vec<(String, fn(&mut Scene))>,
+    first_scene: &str
+) {
     println!("Hello, ZENgine!");
 
     // Init Window
@@ -102,11 +98,29 @@ pub fn start(option: EngineOption) {
     let projection = Matrix4x4::orthographics(0.0, option.virtual_width as f32, 0.0, option.virtual_height as f32, -100.0, 100.0);
 
     let mut manager = Manager::new();
-    
-    let u_projection_location = manager.shaders.get("basic").get_uniform_location("u_projection");
 
-    let mut scene = create_scene();
+    if let Some(shaders_declaration) = shaders_declaration {
+        for t in shaders_declaration.iter() {
+            manager.shaders.register(&t.0, &t.1);
+        }
+    }  
+
+    if let Some(textures_declaration) = textures_declaration {
+        for t in textures_declaration.iter() {
+            manager.textures.register(&t.0, &t.1);
+        }
+    } 
     
+    let mut scenes = HashMap::new();
+    for s in scenes_declaration.iter() {
+        scenes.insert(String::from(&s.0), s.1);
+    }    
+
+    let u_projection_location = manager.shaders.get("basic").get_uniform_location("u_projection");
+    
+    let mut scene = Scene::new(first_scene);
+    scenes.get(first_scene).unwrap()(&mut scene);
+
     scene.declare_resource(&mut manager);   
 
     scene.load(&manager);
@@ -117,7 +131,7 @@ pub fn start(option: EngineOption) {
     
     let mut event_pump = sdl_context.event_pump().unwrap();
     
-    let mut start_loop_time = Instant::now();
+    let mut start_loop_time;
     let mut end_loop_time = None;
     let sec_per_frame = 1.0 / option.fps as f32;    
 
@@ -193,53 +207,6 @@ pub fn start(option: EngineOption) {
         
         println!("Limitless FPS {} - current FPS {} - loop_time {} - sleeped for {} - delta {}", 1.0 / loop_time, 1.0 / (loop_time + sleep_for), loop_time, sleep_for, delta);
     }
-}
-
-struct TranslateBehavior {
-    pub value: f32,
-    pub axis: u32
-}
-
-impl Behavior for TranslateBehavior {
-    fn update(&self, time: f32, owner_transform: &mut Transform) {
-        if self.axis == 1 {
-            owner_transform.position.x += self.value * time as f32;
-        }
-        if self.axis == 2 {
-            owner_transform.position.y += self.value * time as f32;
-        }
-        if self.axis == 3 {
-            owner_transform.position.z += self.value * time as f32;
-        }
-    }
-}
-
-fn create_scene<'a>() -> Scene<'a> {
-    let mut scene = Scene::new();
-    scene.textures.push((String::from("test"), String::from("duck.png")));
-
-    let s_component = SpriteComponent::new("Test", 200.0, 200.0, Vector3::one(), "basic", Material::new(Color::white(), "test"));
-
-    let b1 = TranslateBehavior {
-        value: 100.0,
-        axis: 1
-    };
-
-    let b2 = TranslateBehavior {
-        value: 100.0,
-        axis: 2
-    };
-
-    let mut node = Node::new("prova");
-    node.transform.position.y = 300.0;
-
-    node.add_component(s_component);
-    node.add_behavior(b1);
-
-    //scene.get_root().add_behavior(b2);
-    scene.get_root().add_node(node);
-
-    scene
 }
 
 fn resize(new_size: Option<(i32, i32)>, option: &EngineOption) {

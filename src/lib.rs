@@ -1,6 +1,6 @@
 pub mod engine;
-mod math;
-mod graphics;
+pub mod math;
+pub mod graphics;
 mod gl_utilities;
 mod assets;
 pub mod world;
