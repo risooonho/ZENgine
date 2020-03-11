@@ -2,6 +2,8 @@ extern crate zengine;
 
 use serde::{Serialize, Deserialize};
 
+use zengine::engine::SceneDeclaration;
+
 use zengine::assets::text_loader;
 use zengine::world::scene::Scene;
 use zengine::world::node::Node;
@@ -21,7 +23,7 @@ fn main() {
         zengine::engine::option_from_json("option.json"),
         zengine::engine::resources_declaration_from_json("option.json"),
         vec![
-            (String::from("test"), declare_scene)
+            SceneDeclaration { name: String::from("test"), file: Some(String::from("scenes/test.json")), declare_delegate: Some(declare_scene) }
         ],
         "test"
     );
@@ -47,7 +49,7 @@ impl Behavior for TranslateBehavior {
 }
 
 fn declare_scene(scene: &mut Scene) {
-    scene.declare_from_json("scenes/test.json");
+    //scene.declare_from_json("scenes/test.json");
 
     let s_component = SpriteComponent::new("Test", 200.0, 200.0, Vector3::one(), "basic", Material::new(Color::white(), "duck"));
 

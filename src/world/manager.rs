@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use crate::graphics::texture::Texture;
 use crate::gl_utilities::shader::Shader;
 use std::collections::HashMap;
@@ -49,7 +50,7 @@ impl ShaderManager {
 }
 
 pub struct TextureManager {
-    pub textures: HashMap<String, Texture>
+    pub textures: HashMap<String, Arc<Texture>>
 }
 
 impl TextureManager {
@@ -60,12 +61,12 @@ impl TextureManager {
     }
 
     pub fn register(&mut self, texture_name: &str, file_name: &str) {
-        self.textures.insert(String::from(texture_name), Texture::new(file_name));
+        self.textures.insert(String::from(texture_name), Arc::new(Texture::new(file_name)));
     }
 
-    pub fn get(&self, texture_name: &str) -> &Texture {
+    pub fn get(&self, texture_name: &str) -> Arc<Texture> {
         match self.textures.get(texture_name) {
-            Some(texture) => texture,
+            Some(texture) => texture.clone(),
             None => {
                 panic!("Texture with name {} not found", texture_name)
             }

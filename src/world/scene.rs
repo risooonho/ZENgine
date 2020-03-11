@@ -1,3 +1,4 @@
+use crate::world::node::NodeDeclaration;
 use crate::engine::ResourceDeclaration;
 use serde::{Deserialize};
 
@@ -6,17 +7,26 @@ use crate::world::node::Node;
 use crate::assets::text_loader;
 
 #[derive(Deserialize)]
-pub struct Scene<'a> {
+pub struct SceneDeclaration {
     pub name: String,
 
     #[serde(default)]
     pub resources: ResourceDeclaration,
 
-    pub root: Node<'a>
+    #[serde(default)]
+    pub root: NodeDeclaration
 }
 
-impl<'a> Scene<'a> {
-    pub fn new(name: &str) -> Scene<'a> {
+pub struct Scene {
+    pub name: String,
+
+    pub resources: ResourceDeclaration,
+
+    pub root: Node
+}
+
+impl Scene {
+    pub fn new(name: &str) -> Scene {
         Scene {
             name: String::from(name),
             resources: ResourceDeclaration::default(),
@@ -24,11 +34,11 @@ impl<'a> Scene<'a> {
         }
     }
 
-    pub fn get_root(&mut self) -> &mut Node<'a> {
+    pub fn get_root(&mut self) -> &mut Node {
         &mut self.root
     }
 
-    pub fn get_node(&mut self, name: &str) -> Option<&mut Node<'a>> {
+    pub fn get_node(&mut self, name: &str) -> Option<&mut Node> {
         for n in self.root.children.iter_mut() {
             if n.name == name {
                 return Some(n);
@@ -48,7 +58,7 @@ impl<'a> Scene<'a> {
         }        
     }
 
-    pub fn load(&mut self, manager: &'a Manager) {
+    pub fn load(&mut self, manager: &Manager) {
         self.root.load(manager);
     }
 
@@ -60,13 +70,17 @@ impl<'a> Scene<'a> {
         self.root.render();
     }
 
-    pub fn declare_from_json(&mut self, json_file: &str) {
-        let scene_json = text_loader::load(json_file);
-        let scene_deserialized: Scene = serde_json::from_str(&scene_json.data).unwrap();
+    pub fn declare_from_json(name: &str, json_file: &str) -> Scene {
+        let mut scene = Scene::new(name);
 
-        self.name = scene_deserialized.name;
-        self.resources = scene_deserialized.resources;
-        self.root = scene_deserialized.root;
+        let scene_json = text_loader::load(json_file);
+        let scene_declaration: SceneDeclaration = serde_json::from_str(&scene_json.data).unwrap();
+
+        scene.resources = scene_declaration.resources;
+
+        scene.root = scene_declaration.root.create_node();
+
+        scene
     }
 
 /*

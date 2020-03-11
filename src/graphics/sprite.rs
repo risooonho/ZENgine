@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use crate::graphics::texture::Texture;
 use crate::graphics::material::Material;
 use crate::math::matrix4x4::Matrix4x4;
@@ -7,7 +8,7 @@ use crate::gl_utilities::gl_buffer::GLBuffer;
 use crate::gl_utilities::shader::Shader;
 use crate::graphics::vertex::Vertex;
 
-pub struct Sprite<'a> {
+pub struct Sprite {
 
     pub width: f32,
     pub height: f32,
@@ -21,13 +22,13 @@ pub struct Sprite<'a> {
     buffer: GLBuffer,
     vertices: [Vertex; 6],
 
-    pub material: Material<'a>,
+    pub material: Material,
 
     pub shader_name: String
 }
 
-impl<'a> Sprite<'a> {
-    pub fn new(shader_name: &str, material: Material<'a>, width: Option<f32>, height: Option<f32>) -> Sprite<'a> {
+impl Sprite {
+    pub fn new(shader_name: &str, material: Material, width: Option<f32>, height: Option<f32>) -> Sprite {
         Sprite {
             shader_name: String::from(shader_name),
             width: match width { Some(w) => w, _ => 10.0 },
@@ -56,7 +57,7 @@ impl<'a> Sprite<'a> {
         self.calculate_vertices();
     }
 
-    pub fn load(&mut self, shader: &Shader, texture: &'a Texture) {
+    pub fn load(&mut self, shader: &Shader, texture: Arc<Texture>) {
         let a_position_location = shader.get_attribute_location("a_position");
         let a_tex_coord_location = shader.get_attribute_location("a_tex_coord");
 

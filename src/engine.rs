@@ -60,10 +60,16 @@ pub struct ResourceDeclaration {
     pub textures: Vec<DeclarationItem>
 }
 
+pub struct SceneDeclaration {
+    pub name: String,
+    pub file: Option<String>,
+    pub declare_delegate: Option<fn(&mut Scene)>
+}
+
 pub fn start(
     option: EngineOption, 
     resources_declaration: ResourceDeclaration,
-    scenes_declaration: Vec<(String, fn(&mut Scene))>,
+    scenes_declaration: Vec<SceneDeclaration>,
     first_scene: &str
 ) {
     println!("Hello, ZENgine!");
@@ -123,13 +129,28 @@ pub fn start(
     
     let mut scenes = HashMap::new();
     for s in scenes_declaration.iter() {
-        scenes.insert(String::from(&s.0), s.1);
+        scenes.insert(
+            String::from(&s.name), 
+            ( 
+                match &s.file { Some(file) => Some(String::from(file)), _ => None }, 
+                s.declare_delegate
+            )
+        );
     }    
 
     let u_projection_location = manager.shaders.get("basic").get_uniform_location("u_projection");
     
-    let mut scene = Scene::new(first_scene);
-    scenes.get(first_scene).unwrap()(&mut scene);
+    let scene_declaration = scenes.get(first_scene).unwrap();
+    
+    let mut scene;
+    if let Some(scene_file) = &scene_declaration.0 {
+        scene = Scene::declare_from_json(first_scene, &scene_file);
+    } else {
+        scene = Scene::new(first_scene)
+    }
+    if let Some(declare_delegate) = scene_declaration.1 {
+        declare_delegate(&mut scene);
+    }
 
     scene.declare_resource(&mut manager);   
 

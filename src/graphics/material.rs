@@ -1,13 +1,19 @@
+use std::sync::Arc;
+use serde::{Deserialize};
+
 use crate::graphics::texture::Texture;
 use crate::graphics::color::Color;
 
-pub struct Material<'a> {
+#[derive(Deserialize)]
+pub struct Material {
     pub tint: Color,
     pub texture_name: String,
-    texture: Option<&'a Texture>
+
+    #[serde(skip_deserializing)]
+    texture: Option<Arc<Texture>>
 }
 
-impl<'a> Material<'a> {
+impl Material {
     pub fn new(tint: Color, texture_name: &str) -> Material {
         Material {
             tint: tint,
@@ -16,7 +22,7 @@ impl<'a> Material<'a> {
         }
     }
 
-    pub fn load(&mut self, texture: &'a Texture) {
+    pub fn load(&mut self, texture: Arc<Texture>) {
         self.texture = Some(texture);
     }
 
@@ -30,7 +36,7 @@ impl<'a> Material<'a> {
                 self.tint.a
             );
 
-            match self.texture {
+            match &self.texture {
                 Some(texture) => {
                     texture.activate();
                     gl::Uniform1i(diffuse_location, 0);

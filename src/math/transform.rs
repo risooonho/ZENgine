@@ -3,7 +3,7 @@ use serde::{Deserialize};
 use crate::math::matrix4x4::Matrix4x4;
 use crate::math::vector3::Vector3;
 
-#[derive(Deserialize, Default)]
+#[derive(Deserialize, Default, Copy, Clone)]
 pub struct Transform {
     #[serde(default)]
     pub position: Vector3,

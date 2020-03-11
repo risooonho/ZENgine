@@ -1,3 +1,4 @@
+use crate::components::ComponentDeclaration;
 use serde::{Deserialize};
 
 use crate::world::manager::Manager;
@@ -6,12 +7,12 @@ use crate::behaviors::Behavior;
 use crate::math::matrix4x4::Matrix4x4;
 use crate::math::transform::Transform;
 
-#[derive(Deserialize)]
-pub struct Node<'a> {
+#[derive(Deserialize, Default)]
+pub struct NodeDeclaration {
     pub name: String,
 
     #[serde(default)]
-    pub children: Vec<Node<'a>>,
+    pub children: Vec<NodeDeclaration>,
 
     #[serde(default)]
     pub visible: bool,
@@ -19,19 +20,45 @@ pub struct Node<'a> {
     #[serde(default)]
     pub transform: Transform,
 
-    #[serde(skip_deserializing)]
-    pub local_matrix: Matrix4x4,
-
-    #[serde(skip_deserializing)]
-    pub world_matrix: Matrix4x4,
-
-    #[serde(skip_deserializing)]
-    pub components: Vec<Box<dyn Component<'a> + 'a>>,
-    #[serde(skip_deserializing)]
-    pub behaviors: Vec<Box<dyn Behavior + 'a>>
+    #[serde(default)]
+    pub components: Vec<ComponentDeclaration>,
 }
 
-impl<'a> Node<'a> {
+impl NodeDeclaration {
+    pub fn create_node(&self) -> Node {
+        let mut node = Node::new(&self.name);
+
+        node.visible = self.visible;
+        node.transform = self.transform;
+
+        /*for c in self.components {
+            //node.components.push(c.)
+        }*/
+
+        for nd in &self.children {
+            node.children.push(nd.create_node());
+        }
+
+        node
+    }
+}
+
+pub struct Node {
+    pub name: String,
+
+    pub children: Vec<Node>,
+
+    pub visible: bool,
+    pub transform: Transform,
+
+    pub local_matrix: Matrix4x4,
+    pub world_matrix: Matrix4x4,
+
+    pub components: Vec<Box<dyn Component>>,
+    pub behaviors: Vec<Box<dyn Behavior>>
+}
+
+impl Node {
     pub fn new(name: &str) -> Node {
         Node {
             name: String::from(name),
@@ -49,19 +76,19 @@ impl<'a> Node<'a> {
         }
     }
 
-    pub fn add_node(&mut self, node: Node<'a>) {
+    pub fn add_node(&mut self, node: Node) {
         self.children.push(node);
     }
 
-    pub fn add_component(&mut self, component: impl Component<'a> + 'a) {
+    pub fn add_component(&mut self, component: impl Component + 'static) {
         self.components.push(Box::new(component));
     }
 
-    pub fn add_behavior(&mut self, behavior: impl Behavior + 'a) {
+    pub fn add_behavior(&mut self, behavior: impl Behavior + 'static) {
         self.behaviors.push(Box::new(behavior));
     }
 
-    pub fn load(&mut self, manager: &'a Manager) {
+    pub fn load(&mut self, manager: &Manager) {
         for c in self.components.iter_mut() {
             c.load(manager)
         }
