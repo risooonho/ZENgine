@@ -70,6 +70,38 @@ impl Texture {
         t
     }
 
+    pub fn create_no_texture() -> Texture {
+        let mut t = Texture {
+            name: String::from(""),
+
+            width: 1,
+            height: 1,
+
+            texture_id: 0
+        };
+
+        unsafe {
+            gl::GenTextures(1, &mut t.texture_id);
+            gl::BindTexture(gl::TEXTURE_2D, t.texture_id);
+
+            let fake_data: [u8; 4] = [255; 4];
+
+            gl::TexImage2D(
+                gl::TEXTURE_2D,
+                LEVEL,
+                gl::RGBA as i32,
+                t.width as i32,
+                t.height as i32,
+                BORDER,
+                gl::RGBA,
+                gl::UNSIGNED_BYTE,
+                fake_data.as_ptr() as *const gl::types::GLvoid
+            );
+        }
+
+        t
+    }
+
     pub fn activate(&self) {
         unsafe {
             gl::ActiveTexture(gl::TEXTURE0);

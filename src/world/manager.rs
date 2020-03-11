@@ -55,9 +55,16 @@ pub struct TextureManager {
 
 impl TextureManager {
     pub fn new() -> TextureManager {
-        TextureManager {
+        let mut tm = TextureManager {
             textures: HashMap::new()
-        }
+        };
+
+        tm.textures.insert(
+            String::from(""), 
+            Arc::new(Texture::create_no_texture())
+        );
+
+        tm
     }
 
     pub fn register(&mut self, texture_name: &str, file_name: &str) {

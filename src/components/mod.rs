@@ -1,12 +1,11 @@
+use serde::de::DeserializeOwned;
 use serde::{Deserialize}; 
 use crate::world::manager::Manager;
 use crate::math::matrix4x4::Matrix4x4;
 
 pub mod sprite_component;
 
-pub trait Component {
-    //fn json_builder(data: serde_json::Value) -> Self;
-    
+pub trait Component {    
     fn load(&mut self, manager: &Manager);
 
     fn update(&self) {}
@@ -16,27 +15,16 @@ pub trait Component {
 
 #[derive(Deserialize)]
 pub struct ComponentDeclaration {
-    name: String,
-    r#type: String,
+    pub name: String,
+    pub r#type: String,
     data: serde_json::Value
 }
 
-pub trait Test {
-    fn testiammo() -> Self;
-
-    fn sigh(&self);
-}
-
-pub struct Prova {
-    data: f32
-}
-
-impl Test for Prova {
-    fn testiammo() -> Prova {
-        Prova { data: 5.0 }
-    }
-
-    fn sigh(&self) {
-
+impl ComponentDeclaration {
+    pub fn decode_data<T>(&self) -> T where T: DeserializeOwned {
+        match serde_json::from_value(self.data.clone()) {
+            Ok(decoded) => return decoded,
+            Err(why) => panic!("Cannot decode component {} with type {}: {}", self.name, self.r#type, why)
+        }
     }
 }

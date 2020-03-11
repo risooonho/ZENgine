@@ -1,3 +1,5 @@
+use crate::graphics::color::Color;
+use crate::engine::JsonBuilder;
 use crate::world::node::NodeDeclaration;
 use crate::engine::ResourceDeclaration;
 use serde::{Deserialize};
@@ -14,6 +16,9 @@ pub struct SceneDeclaration {
     pub resources: ResourceDeclaration,
 
     #[serde(default)]
+    pub background: Color,
+
+    #[serde(default)]
     pub root: NodeDeclaration
 }
 
@@ -21,6 +26,8 @@ pub struct Scene {
     pub name: String,
 
     pub resources: ResourceDeclaration,
+
+    pub background: Color,
 
     pub root: Node
 }
@@ -30,6 +37,8 @@ impl Scene {
         Scene {
             name: String::from(name),
             resources: ResourceDeclaration::default(),
+
+            background: Color::default(),
             root: Node::new("ROOT")
         }
     }
@@ -70,7 +79,7 @@ impl Scene {
         self.root.render();
     }
 
-    pub fn declare_from_json(name: &str, json_file: &str) -> Scene {
+    pub fn declare_from_json(name: &str, json_file: &str, json_builder: &JsonBuilder) -> Scene {
         let mut scene = Scene::new(name);
 
         let scene_json = text_loader::load(json_file);
@@ -78,7 +87,8 @@ impl Scene {
 
         scene.resources = scene_declaration.resources;
 
-        scene.root = scene_declaration.root.create_node();
+        scene.background = scene_declaration.background;
+        scene.root = scene_declaration.root.create_node(json_builder);
 
         scene
     }

@@ -1,3 +1,5 @@
+use crate::behaviors::BehaviorDeclaration;
+use crate::engine::JsonBuilder;
 use crate::components::ComponentDeclaration;
 use serde::{Deserialize};
 
@@ -22,21 +24,38 @@ pub struct NodeDeclaration {
 
     #[serde(default)]
     pub components: Vec<ComponentDeclaration>,
+
+    #[serde(default)]
+    pub behaviors: Vec<BehaviorDeclaration>,
 }
 
 impl NodeDeclaration {
-    pub fn create_node(&self) -> Node {
+    pub fn create_node(&self, json_builder: &JsonBuilder) -> Node {
         let mut node = Node::new(&self.name);
 
         node.visible = self.visible;
         node.transform = self.transform;
 
-        /*for c in self.components {
-            //node.components.push(c.)
-        }*/
+        for c in &self.components {
+            node.components.push( 
+                match json_builder.components.get(&c.r#type) {
+                    Some(builder) => builder(c),
+                    None => panic!("No builder for component with type {}", c.r#type)
+                }
+            );
+        }
+
+        for b in &self.behaviors {
+            node.behaviors.push( 
+                match json_builder.behaviors.get(&b.r#type) {
+                    Some(builder) => builder(b),
+                    None => panic!("No builder for behavior with type {}", b.r#type)
+                }
+            );
+        }
 
         for nd in &self.children {
-            node.children.push(nd.create_node());
+            node.children.push(nd.create_node(json_builder));
         }
 
         node

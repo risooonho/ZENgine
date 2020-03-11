@@ -2,19 +2,29 @@ use serde::{Deserialize};
 
 #[derive(Deserialize)]
 pub struct Color {
-    pub r: f32,
-    pub g: f32,
-    pub b: f32,
-    pub a: f32
+    #[serde(default)]
+    pub r: u8,
+    #[serde(default)]
+    pub g: u8,
+    #[serde(default)]
+    pub b: u8,
+    #[serde(default = "default_alpha")]
+    pub a: u8
+}
+
+fn default_alpha() -> u8 { 255 }
+
+impl Default for Color {
+    fn default() -> Self { Color::white() }
 }
 
 impl Color {
     pub fn new(r: u8, g: u8, b: u8, a: u8) -> Color {
         Color {
-            r: r as f32 / 255.0,
-            g: g as f32 / 255.0,
-            b: b as f32 / 255.0,
-            a: a as f32 / 255.0,
+            r: r,
+            g: g,
+            b: b,
+            a: a,
         }
     }
 

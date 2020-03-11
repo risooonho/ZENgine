@@ -1,6 +1,9 @@
 extern crate sdl2;
 extern crate gl;
 
+use crate::behaviors::BehaviorDeclaration;
+use crate::behaviors::Behavior;
+use crate::components::ComponentDeclaration;
 use sdl2::VideoSubsystem;
 use sdl2::video::{GLProfile, DisplayMode, FullscreenType, SwapInterval};
 use sdl2::event::Event;
@@ -10,6 +13,8 @@ use std::time::{Duration, Instant};
 use std::collections::HashMap;
 use serde::{Deserialize};
 
+use crate::components::Component;
+use crate::components::sprite_component::SpriteComponent;
 use crate::world::manager::Manager;
 use crate::math::matrix4x4::Matrix4x4;
 use crate::world::scene::Scene;
@@ -60,16 +65,17 @@ pub struct ResourceDeclaration {
     pub textures: Vec<DeclarationItem>
 }
 
-pub struct SceneDeclaration {
-    pub name: String,
-    pub file: Option<String>,
-    pub declare_delegate: Option<fn(&mut Scene)>
+pub struct JsonBuilder {
+    pub components: HashMap<String, fn(declaration: &ComponentDeclaration) -> Box<dyn Component>>,
+    pub behaviors: HashMap<String, fn(declaration: &BehaviorDeclaration) -> Box<dyn Behavior>>
 }
 
 pub fn start(
     option: EngineOption, 
     resources_declaration: ResourceDeclaration,
-    scenes_declaration: Vec<SceneDeclaration>,
+    scenes_declaration: Vec<(String, Option<String>, Option<fn(&mut Scene)>)>,
+    component_builder_declaration: Vec<(String, fn(declaration: &ComponentDeclaration) -> Box<dyn Component>)>,
+    behavior_builder_declaration: Vec<(String, fn(declaration: &BehaviorDeclaration) -> Box<dyn Behavior>)>,
     first_scene: &str
 ) {
     println!("Hello, ZENgine!");
@@ -115,14 +121,23 @@ pub fn start(
     println!("Pixel format of the window's GL context: {:?}", window.window_pixel_format());
     println!("OpenGL Profile: {:?} - OpenGL version: {:?}", gl_attr.context_profile(), gl_attr.context_version());
 
-    let projection = Matrix4x4::orthographics(0.0, option.virtual_width as f32, 0.0, option.virtual_height as f32, -100.0, 100.0);
+    let mut builder = JsonBuilder { components: HashMap::new(), behaviors: HashMap::new() };
+    builder.components.insert(String::from("sprite"), SpriteComponent::json_builder);
 
+    for c in &component_builder_declaration {
+        builder.components.insert(String::from(&c.0), c.1);
+    }
+
+    for b in &behavior_builder_declaration {
+        builder.behaviors.insert(String::from(&b.0), b.1);
+    }    
+    
     let mut manager = Manager::new();
-
+    
     for t in resources_declaration.shaders.iter() {
         manager.shaders.register(&t.name, &t.file);
     }
-
+    
     for t in resources_declaration.textures.iter() {
         manager.textures.register(&t.name, &t.file);
     }
@@ -130,21 +145,22 @@ pub fn start(
     let mut scenes = HashMap::new();
     for s in scenes_declaration.iter() {
         scenes.insert(
-            String::from(&s.name), 
+            String::from(&s.0), 
             ( 
-                match &s.file { Some(file) => Some(String::from(file)), _ => None }, 
-                s.declare_delegate
+                match &s.1 { Some(file) => Some(String::from(file)), _ => None }, 
+                s.2
             )
         );
     }    
-
+    
+    let projection = Matrix4x4::orthographics(0.0, option.virtual_width as f32, 0.0, option.virtual_height as f32, -100.0, 100.0);
     let u_projection_location = manager.shaders.get("basic").get_uniform_location("u_projection");
     
     let scene_declaration = scenes.get(first_scene).unwrap();
     
     let mut scene;
     if let Some(scene_file) = &scene_declaration.0 {
-        scene = Scene::declare_from_json(first_scene, &scene_file);
+        scene = Scene::declare_from_json(first_scene, &scene_file, &builder);
     } else {
         scene = Scene::new(first_scene)
     }
@@ -214,7 +230,12 @@ pub fn start(
 
             gl::Enable(gl::SCISSOR_TEST);
 
-            gl::ClearColor(1.0, 1.0, 0.0, 1.0);
+            gl::ClearColor(
+                scene.background.r as f32 / 255.0,
+                scene.background.g as f32 / 255.0,
+                scene.background.b as f32 / 255.0,
+                scene.background.a as f32 / 255.0
+            );
             gl::Clear(gl::COLOR_BUFFER_BIT);
         
             gl::UniformMatrix4fv(

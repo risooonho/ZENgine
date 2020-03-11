@@ -81,7 +81,7 @@ impl Sprite {
 
         self.calculate_vertices();
 
-        self.material.load(texture);
+        self.material.set_texture(texture);        
     }
 
     pub fn calculate_vertices(&mut self) {

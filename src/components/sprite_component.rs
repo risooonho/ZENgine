@@ -1,3 +1,4 @@
+use crate::components::ComponentDeclaration;
 use serde::{Deserialize};
 
 use crate::world::manager::Manager;
@@ -13,12 +14,17 @@ pub struct SpriteComponentDeclaration {
 
     height: f32,
 
+    #[serde(default)]
     origin: Vector3,
 
+    #[serde(default = "basic_shader")]
     shader_name: String,
 
+    #[serde(default)]
     material: Material
 }
+
+fn basic_shader() -> String { "basic".to_string() }
 
 pub struct SpriteComponent {
     name: String,
@@ -29,22 +35,6 @@ pub struct SpriteComponent {
 }
 
 impl Component for SpriteComponent {
-    /*fn json_builder(name: &str, data: serde_json::Value) -> Self {
-        let scd: SpriteComponentDeclaration = serde_json::from_value(data).unwrap();
-
-        let mut c = SpriteComponent {
-            name: String::from(name),
-
-            origin: scd.origin,
-
-            sprite: Sprite::new(&scd.shader_name, scd.material, Some(scd.width), Some(scd.height))
-        };
-
-        c.sprite.set_origin(c.origin);
-
-        c
-    }*/
-
     fn load(&mut self, manager: &Manager) {
         self.sprite.load(
             manager.shaders.get(&self.sprite.shader_name),
@@ -70,5 +60,21 @@ impl SpriteComponent {
         c.sprite.set_origin(c.origin);
 
         c
+    }
+
+    pub fn json_builder(declaration: &ComponentDeclaration) -> Box<dyn Component> {
+        let scd: SpriteComponentDeclaration = declaration.decode_data();
+
+        let mut c = SpriteComponent {
+            name: String::from(&declaration.name),
+
+            origin: scd.origin,
+
+            sprite: Sprite::new(&scd.shader_name, scd.material, Some(scd.width), Some(scd.height))
+        };
+
+        c.sprite.set_origin(c.origin);
+
+        Box::new(c)
     }
 }

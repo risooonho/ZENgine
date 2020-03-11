@@ -5,6 +5,11 @@
             { "name": "duck", "file": "duck.png" }
         ]
     },
+    "background": {
+        "r": 134,
+        "g": 75,
+        "b": 34
+    },
     "root": {
         "name": "Duck",
         "visible": true,
@@ -12,6 +17,40 @@
             "position": {
                 "y": 300
             }
-        }
+        },
+        "components": [
+            {
+                "name": "Duck",
+                "type": "sprite",
+                "data": {
+                    "width": 150,
+                    "height": 150,
+                    "origin": {
+                        "x": 0,
+                        "y": 0,
+                        "z": 0
+                    },
+                    "shader_name": "basic",
+                    "material": {
+                        "tint": {
+                            "r": 200,
+                            "g": 255
+                        },
+                        "texture_name": "duck"
+                    }
+                    
+                }
+            }
+        ],
+        "behaviors": [
+            {
+                "name": "test",
+                "type": "move",
+                "data": {
+                    "value": 100,
+                    "axis": 1
+                }
+            }
+        ]
     } 
 }
