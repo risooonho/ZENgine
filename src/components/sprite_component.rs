@@ -18,7 +18,7 @@ pub struct SpriteComponentDeclaration {
     origin: Vector3,
 
     #[serde(default = "basic_shader")]
-    shader_name: String,
+    shader: String,
 
     #[serde(default)]
     material: Material
@@ -38,7 +38,7 @@ impl Component for SpriteComponent {
     fn load(&mut self, manager: &Manager) {
         self.sprite.load(
             manager.shaders.get(&self.sprite.shader_name),
-            manager.textures.get(&self.sprite.material.texture_name)
+            manager.textures.get(&self.sprite.material.texture)
         );
     }
 
@@ -48,13 +48,13 @@ impl Component for SpriteComponent {
 }
 
 impl SpriteComponent {
-    pub fn new(name: &str, width: f32, height: f32, origin: Vector3, shader_name: &str, material: Material) -> SpriteComponent {
+    pub fn new(name: &str, width: f32, height: f32, origin: Vector3, shader: &str, material: Material) -> SpriteComponent {
         let mut c = SpriteComponent {
             name: String::from(name),
 
             origin: origin,
 
-            sprite: Sprite::new(shader_name, material, Some(width), Some(height))
+            sprite: Sprite::new(shader, material, Some(width), Some(height))
         };
 
         c.sprite.set_origin(c.origin);
@@ -70,7 +70,7 @@ impl SpriteComponent {
 
             origin: scd.origin,
 
-            sprite: Sprite::new(&scd.shader_name, scd.material, Some(scd.width), Some(scd.height))
+            sprite: Sprite::new(&scd.shader, scd.material, Some(scd.width), Some(scd.height))
         };
 
         c.sprite.set_origin(c.origin);

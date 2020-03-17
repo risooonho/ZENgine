@@ -6,3 +6,4 @@ pub mod assets;
 pub mod world;
 pub mod components;
 pub mod behaviors;
+pub mod input;

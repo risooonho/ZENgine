@@ -1,10 +1,10 @@
+use crate::world::node::State;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize}; 
-use crate::math::transform::Transform;
 
 pub trait Behavior {
     #[allow(unused_variables)]
-    fn update(&self, time: f32, owner_transform: &mut Transform) {}
+    fn update(&self, time: f32, state: &mut State) {}
 }
 
 #[derive(Deserialize)]

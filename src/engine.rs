@@ -152,11 +152,15 @@ pub fn start(
             )
         );
     }    
-    
+
     let projection = Matrix4x4::orthographics(0.0, option.virtual_width as f32, 0.0, option.virtual_height as f32, -100.0, 100.0);
     let u_projection_location = manager.shaders.get("basic").get_uniform_location("u_projection");
     
     let scene_declaration = scenes.get(first_scene).unwrap();
+    
+    manager.shaders.get("basic").use_shader();
+
+    resize(None, &option);
     
     let mut scene;
     if let Some(scene_file) = &scene_declaration.0 {
@@ -172,15 +176,12 @@ pub fn start(
 
     scene.load(&manager);
 
-    manager.shaders.get("basic").use_shader();
-
-    resize(None, &option);
-    
     let mut event_pump = sdl_context.event_pump().unwrap();
     
     let mut start_loop_time;
     let mut end_loop_time = None;
     let sec_per_frame = 1.0 / option.fps as f32;    
+
 
     'main_loop: loop {
         start_loop_time = Instant::now();
@@ -210,7 +211,8 @@ pub fn start(
                         }
                     }
                     _ => ()
-                }
+                },
+                Event::ControllerButtonDown { timestamp, which, button } => { },
                 _ => ()
             }
         }
@@ -256,9 +258,10 @@ pub fn start(
         if sleep_for > 0.0 {
             thread::sleep(Duration::from_secs_f32(sleep_for));
         }
-        
+            
         println!("Limitless FPS {} - current FPS {} - loop_time {} - sleeped for {} - delta {}", 1.0 / loop_time, 1.0 / (loop_time + sleep_for), loop_time, sleep_for, delta);
     }
+
 }
 
 fn resize(new_size: Option<(i32, i32)>, option: &EngineOption) {

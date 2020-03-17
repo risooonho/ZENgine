@@ -7,7 +7,7 @@
     },
     "background": {
         "r": 134,
-        "g": 75,
+        "g": 255,
         "b": 34
     },
     "root": {
@@ -25,18 +25,12 @@
                 "data": {
                     "width": 150,
                     "height": 150,
-                    "origin": {
-                        "x": 0,
-                        "y": 0,
-                        "z": 0
-                    },
-                    "shader_name": "basic",
                     "material": {
                         "tint": {
                             "r": 200,
                             "g": 255
                         },
-                        "texture_name": "duck"
+                        "texture": "duck"
                     }
                     
                 }

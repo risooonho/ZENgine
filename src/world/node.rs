@@ -33,8 +33,8 @@ impl NodeDeclaration {
     pub fn create_node(&self, json_builder: &JsonBuilder) -> Node {
         let mut node = Node::new(&self.name);
 
-        node.visible = self.visible;
-        node.transform = self.transform;
+        node.state.visible = self.visible;
+        node.state.transform = self.transform;
 
         for c in &self.components {
             node.components.push( 
@@ -67,14 +67,18 @@ pub struct Node {
 
     pub children: Vec<Node>,
 
-    pub visible: bool,
-    pub transform: Transform,
+    pub state: State,
 
     pub local_matrix: Matrix4x4,
     pub world_matrix: Matrix4x4,
 
     pub components: Vec<Box<dyn Component>>,
     pub behaviors: Vec<Box<dyn Behavior>>
+}
+
+pub struct State {
+    pub visible: bool,
+    pub transform: Transform
 }
 
 impl Node {
@@ -84,9 +88,11 @@ impl Node {
 
             children: Vec::new(),
 
-            visible: true,
+            state: State {
+                visible: true,
+                transform: Transform::new()
+            },
 
-            transform: Transform::new(),
             local_matrix: Matrix4x4::identity(),
             world_matrix: Matrix4x4::identity(),
 
@@ -119,7 +125,7 @@ impl Node {
 
     pub fn update(&mut self, time: f32, parent_world: Option<&Matrix4x4>) {
 
-        self.local_matrix = self.transform.get_transformation_matrix();
+        self.local_matrix = self.state.transform.get_transformation_matrix();
         match parent_world {
             Some(parent_world) => self.world_matrix = parent_world * self.local_matrix,
             None => self.world_matrix = self.local_matrix
@@ -130,7 +136,7 @@ impl Node {
         }
 
         for b in self.behaviors.iter_mut() {
-            b.update(time, &mut self.transform);
+            b.update(time, &mut self.state);
         }
 
         for n in self.children.iter_mut() {
@@ -139,7 +145,7 @@ impl Node {
     }
 
     pub fn render(&self) {
-        if self.visible {
+        if self.state.visible {
             for c in self.components.iter() {
                 c.render(&self.world_matrix);
             }

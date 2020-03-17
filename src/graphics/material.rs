@@ -11,10 +11,10 @@ pub struct Material {
     pub tint: Color,
 
     #[serde(default)]
-    pub texture_name: String,
+    pub texture: String,
 
     #[serde(skip_deserializing)]
-    texture: Option<Arc<Texture>>
+    texture_ref: Option<Arc<Texture>>
 }
 
 impl Default for Material {
@@ -22,16 +22,16 @@ impl Default for Material {
 }
 
 impl Material {
-    pub fn new(tint: Color, texture_name: Option<&str>) -> Material {
+    pub fn new(tint: Color, texture: Option<&str>) -> Material {
         Material {
             tint: tint,
-            texture_name: String::from(match texture_name { Some(texture_name) => texture_name, _ => "" }),
-            texture: None
+            texture: String::from(match texture { Some(texture) => texture, _ => "" }),
+            texture_ref: None
         }
     }
 
     pub fn set_texture(&mut self, texture: Arc<Texture>) {
-        self.texture = Some(texture);
+        self.texture_ref = Some(texture);
     }
 
     pub fn use_material(&self, color_location: i32, diffuse_location: i32) {
@@ -44,7 +44,7 @@ impl Material {
                 self.tint.a as f32 / 255.0
             );
 
-            match &self.texture {
+            match &self.texture_ref {
                 Some(texture) => {
                     texture.activate();
                     gl::Uniform1i(diffuse_location, 0);

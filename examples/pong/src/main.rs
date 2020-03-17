@@ -4,7 +4,7 @@ use serde::{Serialize, Deserialize};
 
 use zengine::assets::text_loader;
 use zengine::world::scene::Scene;
-use zengine::world::node::Node;
+use zengine::world::node::{Node, State};
 use zengine::components::sprite_component::SpriteComponent;
 use zengine::math::transform::Transform;
 use zengine::graphics::material::Material;
@@ -77,15 +77,15 @@ struct TranslateBehavior {
 }
 
 impl Behavior for TranslateBehavior {
-    fn update(&self, time: f32, owner_transform: &mut Transform) {
+    fn update(&self, time: f32, state: &mut State) {
         if self.axis == 1 {
-            owner_transform.position.x += self.value * time as f32;
+            state.transform.position.x += self.value * time as f32;
         }
         if self.axis == 2 {
-            owner_transform.position.y += self.value * time as f32;
+            state.transform.position.y += self.value * time as f32;
         }
         if self.axis == 3 {
-            owner_transform.position.z += self.value * time as f32;
+            state.transform.position.z += self.value * time as f32;
         }
     }
 }
