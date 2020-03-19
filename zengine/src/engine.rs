@@ -1,6 +1,10 @@
 extern crate sdl2;
 extern crate gl;
 
+use crate::input::Input;
+use crate::input::Input::Keyboard;
+use crate::input::{InputEvent, ActionType, InputFromEvent};
+use crate::input::InputMapping;
 use crate::behaviors::BehaviorDeclaration;
 use crate::behaviors::Behavior;
 use crate::components::ComponentDeclaration;
@@ -76,6 +80,7 @@ pub fn start(
     scenes_declaration: Vec<(String, Option<String>, Option<fn(&mut Scene)>)>,
     component_builder_declaration: Vec<(String, fn(declaration: &ComponentDeclaration) -> Box<dyn Component>)>,
     behavior_builder_declaration: Vec<(String, fn(declaration: &BehaviorDeclaration) -> Box<dyn Behavior>)>,
+    input_mapping: InputMapping,
     first_scene: &str
 ) {
     println!("Hello, ZENgine!");
@@ -83,6 +88,37 @@ pub fn start(
     // Init Window
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
+    let controller_subsystem = sdl_context.game_controller().unwrap();
+
+    let available = controller_subsystem.num_joysticks()
+        .map_err(|e| format!("can't enumerate joysticks: {}", e)).unwrap();
+
+    println!("{} joysticks available", available);
+
+    // Iterate over all available joysticks and look for game controllers.
+    let mut _controller = (0..available).find_map(|id| {
+        if !controller_subsystem.is_game_controller(id) {
+            println!("{} is not a game controller", id);
+            return None;
+        }
+
+        println!("Attempting to open controller {}", id);
+
+        match controller_subsystem.open(id) {
+            Ok(c) => {
+                // We managed to find and open a game controller,
+                // exit the loop
+                println!("Success: opened \"{}\"", c.name());
+                Some(c)
+            },
+            Err(e) => {
+                println!("failed: {:?}", e);
+                None
+            }
+        }
+    }).expect("Couldn't open any controller");
+
+    println!("Controller mapping: {}", _controller.mapping());
 
     let gl_attr = video_subsystem.gl_attr();
     gl_attr.set_context_profile(GLProfile::Core);
@@ -153,6 +189,20 @@ pub fn start(
         );
     }    
 
+    let mut action_map: HashMap<Input, String> = HashMap::new();
+    for am in input_mapping.action_mapping {
+        for e in am.events {
+            action_map.insert(e, am.name.clone());
+        }
+    }
+
+    let mut axis_map: HashMap<Input, String> = HashMap::new();
+    for am in input_mapping.axis_mapping {
+        for e in am.events {
+            axis_map.insert(e, am.name.clone());
+        }
+    }
+
     let projection = Matrix4x4::orthographics(0.0, option.virtual_width as f32, 0.0, option.virtual_height as f32, -100.0, 100.0);
     let u_projection_location = manager.shaders.get("basic").get_uniform_location("u_projection");
     
@@ -186,41 +236,35 @@ pub fn start(
     'main_loop: loop {
         start_loop_time = Instant::now();
 
+        let delta = match end_loop_time {
+            Some(end_loop_time) => start_loop_time.duration_since(end_loop_time).as_secs_f32(),
+            None => sec_per_frame
+        };
+
         for event in event_pump.poll_iter() {
             match event {
                 Event::Quit {..} => {
                     break 'main_loop;
                 },
-                Event::KeyUp { keycode: Some(keycode), keymod, .. } => match(keycode, keymod) {
-                    (Keycode::R, _) => {
-                        println!("red");
-                        unsafe {
-                            gl::ClearColor(1.0, 0.0, 0.0, 1.0);
-                        }
-                    },
-                    (Keycode::G, _) => {
-                        println!("green");
-                        unsafe {
-                            gl::ClearColor(0.0, 1.0, 0.0, 1.0);
-                        }
+                _ => {
+                    let input_from_event = Input::input_from_event(&event);
+                    match input_from_event {
+                        InputFromEvent::Single(data) => {
+                            if let Some(action) = action_map.get(&data.input) {
+                                let input_event = InputEvent::Action(action.clone());
+                                scene.propagate_input_event(delta, &input_event);
+                            }                            
+
+                            if let Some(action) = axis_map.get(&data.input) {
+                                let input_event = InputEvent::Axis(action.clone(), data.value);
+                                scene.propagate_input_event(delta, &input_event);
+                            }
+                        },
+                        _ => {}
                     }
-                    (Keycode::B, _) => {
-                        println!("blue");
-                        unsafe {
-                            gl::ClearColor(0.0, 0.0, 1.0, 1.0);
-                        }
-                    }
-                    _ => ()
-                },
-                Event::ControllerButtonDown { timestamp, which, button } => { },
-                _ => ()
+                }
             }
         }
-
-        let delta = match end_loop_time {
-            Some(end_loop_time) => start_loop_time.duration_since(end_loop_time).as_secs_f32(),
-            None => sec_per_frame
-        };
 
         scene.update(delta);
 
@@ -259,7 +303,7 @@ pub fn start(
             thread::sleep(Duration::from_secs_f32(sleep_for));
         }
             
-        println!("Limitless FPS {} - current FPS {} - loop_time {} - sleeped for {} - delta {}", 1.0 / loop_time, 1.0 / (loop_time + sleep_for), loop_time, sleep_for, delta);
+        //println!("Limitless FPS {} - current FPS {} - loop_time {} - sleeped for {} - delta {}", 1.0 / loop_time, 1.0 / (loop_time + sleep_for), loop_time, sleep_for, delta);
     }
 
 }

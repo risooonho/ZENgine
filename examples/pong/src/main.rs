@@ -15,9 +15,43 @@ use zengine::graphics::color::Color;
 use zengine::components::{Component, ComponentDeclaration};
 use zengine::behaviors::{Behavior, BehaviorDeclaration};
 
+use zengine::input::InputMapping;
+use zengine::input::{Input, Action, Axis};
+use zengine::input::keyboard::Key;
+use zengine::input::controller::{Which};
+use zengine::world::hook::Hook;
+
 use std::collections::HashMap;
 
+use zengine::input::InputEvent;
+use zengine::create_hub;
+
 fn main() {
+
+    let mut input = InputMapping::new();
+
+    input.action_mapping.push(
+        Action {
+            name: String::from("test"),
+            events: vec![Input::Keyboard { key: Key::A }]
+        }
+    );
+    input.axis_mapping.push(
+        Action {
+            name: String::from("x-move"),
+            events: vec![
+                Input::ControllerStick { which: Which::Left, axis: Axis::X }
+            ]
+        }
+    );
+    input.axis_mapping.push(
+        Action {
+            name: String::from("y-move"),
+            events: vec![
+                Input::ControllerStick { which: Which::Left, axis: Axis::Y }
+            ]
+        }
+    );
 
     zengine::engine::start(
         zengine::engine::option_from_json("option.json"),
@@ -31,6 +65,7 @@ fn main() {
         vec![
             (String::from("move"), json_builder)
         ],
+        input,
         "test"
     );
 }
@@ -58,8 +93,9 @@ pub fn json_builder(declaration: &BehaviorDeclaration) -> Box<dyn Behavior> {
     let mb: TranslateBehaviorDeclaration = declaration.decode_data();
 
     let mut b = TranslateBehavior {
-        value: mb.value,
-        axis: mb.axis
+        velocity: mb.velocity,
+        x_vel: 0.0,
+        y_vel: 0.0,
     };
 
     Box::new(b)
@@ -67,26 +103,53 @@ pub fn json_builder(declaration: &BehaviorDeclaration) -> Box<dyn Behavior> {
 
 #[derive(Deserialize)]
 struct TranslateBehaviorDeclaration {
-    pub value: f32,
-    pub axis: u32
+    pub velocity: f32
 }
 
+#[derive(Debug)]
 struct TranslateBehavior {
-    pub value: f32,
-    pub axis: u32
+    pub x_vel: f32,
+    pub y_vel: f32,
+
+    pub velocity: f32,
 }
 
 impl Behavior for TranslateBehavior {
-    fn update(&self, time: f32, state: &mut State) {
-        if self.axis == 1 {
-            state.transform.position.x += self.value * time as f32;
-        }
-        if self.axis == 2 {
-            state.transform.position.y += self.value * time as f32;
-        }
-        if self.axis == 3 {
-            state.transform.position.z += self.value * time as f32;
-        }
+
+    fn load(&mut self) {
+    }
+
+    fn update(&mut self, time: f32, state: &mut State) {
+        state.transform.position.x += self.x_vel * time as f32;
+        state.transform.position.y += self.y_vel * time as f32;   
+    }
+
+    fn event_hub(&mut self, event: &InputEvent) {
+        create_hub!(
+            self,
+            event,
+            action: [
+                "test" => test
+            ],
+            axis: [
+                "x-move" => x_move,
+                "y-move" => y_move
+            ]
+        );
+    }
+}
+
+impl TranslateBehavior {
+    pub fn test(&mut self) {
+        println!("suca");
+    }
+
+    pub fn x_move(&mut self, value: &f32) {
+        self.x_vel = self.velocity * value;
+    }
+
+    pub fn y_move(&mut self, value: &f32) {
+        self.y_vel = self.velocity * value;
     }
 }
 

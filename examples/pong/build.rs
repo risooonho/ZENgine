@@ -21,7 +21,7 @@ fn main() {
 fn copy_dir_content_recursive(dir: &Path, destination_dir: &PathBuf) {
     if dir.is_dir() {
         if !destination_dir.as_path().exists() {
-            fs::create_dir(destination_dir.as_path());
+            fs::create_dir(destination_dir.as_path()).expect("Can't create destination folder");
         }
         
         for entry in fs::read_dir(dir).unwrap() {
@@ -34,7 +34,11 @@ fn copy_dir_content_recursive(dir: &Path, destination_dir: &PathBuf) {
             } else {
                 let mut new_file_path = destination_dir.clone();
                 new_file_path.push(entry.file_name());
-                std::fs::copy(&path, new_file_path.as_path()).expect("Can't copy from Resource dir");
+                match std::fs::copy(&path, new_file_path.as_path()) {
+                    Ok(_v) => {},
+                    Err(e) => panic!("Can't copy from Resource dir: {} - from: {:?} to: {:?}", e, path, new_file_path)
+
+                };
             }
         }
     }

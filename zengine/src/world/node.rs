@@ -1,3 +1,7 @@
+use std::borrow::Borrow;
+
+use crate::input::InputEvent;
+use crate::world::hook::Hook;
 use crate::behaviors::BehaviorDeclaration;
 use crate::engine::JsonBuilder;
 use crate::components::ComponentDeclaration;
@@ -46,11 +50,11 @@ impl NodeDeclaration {
         }
 
         for b in &self.behaviors {
-            node.behaviors.push( 
+            node.behaviors.push(
                 match json_builder.behaviors.get(&b.r#type) {
                     Some(builder) => builder(b),
                     None => panic!("No builder for behavior with type {}", b.r#type)
-                }
+                }            
             );
         }
 
@@ -118,8 +122,22 @@ impl Node {
             c.load(manager)
         }
 
+        for b in self.behaviors.iter_mut() {
+            b.load();
+        }
+
         for n in self.children.iter_mut() {
             n.load(manager)
+        }
+    }
+
+    pub fn propagate_input_event(&mut self, time: f32, event: &InputEvent) {   
+        for b in self.behaviors.iter_mut() {
+            b.event_hub(event);
+        }
+
+        for n in self.children.iter_mut() {
+            n.propagate_input_event(time, event)
         }
     }
 

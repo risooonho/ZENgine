@@ -6,9 +6,9 @@
         ]
     },
     "background": {
-        "r": 134,
-        "g": 255,
-        "b": 34
+        "r": 135,
+        "g": 206,
+        "b": 235
     },
     "root": {
         "name": "Duck",
@@ -26,10 +26,6 @@
                     "width": 150,
                     "height": 150,
                     "material": {
-                        "tint": {
-                            "r": 200,
-                            "g": 255
-                        },
                         "texture": "duck"
                     }
                     
@@ -41,8 +37,7 @@
                 "name": "test",
                 "type": "move",
                 "data": {
-                    "value": 100,
-                    "axis": 1
+                    "velocity": 100
                 }
             }
         ]
