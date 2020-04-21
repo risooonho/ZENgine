@@ -1,4 +1,4 @@
-use crate::input::InputEvent;
+use crate::Event;
 use crate::graphics::color::Color;
 use crate::engine::JsonBuilder;
 use crate::world::node::NodeDeclaration;
@@ -40,7 +40,9 @@ impl Scene {
             resources: ResourceDeclaration::default(),
 
             background: Color::default(),
-            root: Node::new("ROOT")
+            root: Node::new(
+                "ROOT"
+            )
         }
     }
 
@@ -72,12 +74,12 @@ impl Scene {
         self.root.load(manager);
     }
 
-    pub fn propagate_input_event(&mut self, time: f32, event: &InputEvent) {
-        self.root.propagate_input_event(time, event);
+    pub fn propagate_event(&mut self, delta: f32, event: &Event) {
+        self.root.propagate_event(delta, event);
     }
 
-    pub fn update(&mut self, time: f32) {
-        self.root.update(time, None);
+    pub fn tick(&mut self, time: f32) {
+        self.root.tick(time, None);
     }
 
     pub fn render(&self) {

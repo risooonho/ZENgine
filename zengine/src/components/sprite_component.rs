@@ -1,3 +1,6 @@
+use std::rc::Rc;
+use core::any::Any;
+use crate::world::node::Node;
 use crate::components::ComponentDeclaration;
 use serde::{Deserialize};
 
@@ -31,11 +34,23 @@ pub struct SpriteComponent {
 
     origin: Vector3,
 
-    sprite: Sprite
+    sprite: Sprite,
+
+    transform_id: usize
 }
 
 impl Component for SpriteComponent {
-    fn load(&mut self, manager: &Manager) {
+    fn is_my_name(&self, name: &str) -> bool {
+        if self.name == name {
+            true
+        } else {
+            false
+        }
+    }
+
+    fn as_any(&self) -> &dyn Any { self }
+
+    fn load(&mut self, node: &Node, manager: &Manager) {
         self.sprite.load(
             manager.shaders.get(&self.sprite.shader_name),
             manager.textures.get(&self.sprite.material.texture)
@@ -54,7 +69,9 @@ impl SpriteComponent {
 
             origin: origin,
 
-            sprite: Sprite::new(shader, material, Some(width), Some(height))
+            sprite: Sprite::new(shader, material, Some(width), Some(height)),
+
+            transform_id: 0
         };
 
         c.sprite.set_origin(c.origin);
@@ -70,11 +87,13 @@ impl SpriteComponent {
 
             origin: scd.origin,
 
-            sprite: Sprite::new(&scd.shader, scd.material, Some(scd.width), Some(scd.height))
+            sprite: Sprite::new(&scd.shader, scd.material, Some(scd.width), Some(scd.height)),
+
+            transform_id: 0
         };
 
         c.sprite.set_origin(c.origin);
 
-        Box::new(c)
+        Rc::new(c)
     }
 }

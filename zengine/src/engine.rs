@@ -1,17 +1,13 @@
 extern crate sdl2;
 extern crate gl;
 
+use std::rc::Rc;
 use crate::input::Input;
-use crate::input::Input::Keyboard;
-use crate::input::{InputEvent, ActionType, InputFromEvent};
+use crate::input::{InputEvent, InputFromEvent};
 use crate::input::InputMapping;
-use crate::behaviors::BehaviorDeclaration;
-use crate::behaviors::Behavior;
 use crate::components::ComponentDeclaration;
 use sdl2::VideoSubsystem;
 use sdl2::video::{GLProfile, DisplayMode, FullscreenType, SwapInterval};
-use sdl2::event::Event;
-use sdl2::keyboard::Keycode;
 use std::{thread};
 use std::time::{Duration, Instant};
 use std::collections::HashMap;
@@ -23,6 +19,7 @@ use crate::world::manager::Manager;
 use crate::math::matrix4x4::Matrix4x4;
 use crate::world::scene::Scene;
 use crate::assets::text_loader;
+use crate::Event;
 
 extern "system" fn dbg_callback(
     source: gl::types::GLenum,
@@ -70,8 +67,7 @@ pub struct ResourceDeclaration {
 }
 
 pub struct JsonBuilder {
-    pub components: HashMap<String, fn(declaration: &ComponentDeclaration) -> Box<dyn Component>>,
-    pub behaviors: HashMap<String, fn(declaration: &BehaviorDeclaration) -> Box<dyn Behavior>>
+    pub components: HashMap<String, fn(declaration: &ComponentDeclaration) -> Box<dyn Component>>
 }
 
 pub fn start(
@@ -79,7 +75,6 @@ pub fn start(
     resources_declaration: ResourceDeclaration,
     scenes_declaration: Vec<(String, Option<String>, Option<fn(&mut Scene)>)>,
     component_builder_declaration: Vec<(String, fn(declaration: &ComponentDeclaration) -> Box<dyn Component>)>,
-    behavior_builder_declaration: Vec<(String, fn(declaration: &BehaviorDeclaration) -> Box<dyn Behavior>)>,
     input_mapping: InputMapping,
     first_scene: &str
 ) {
@@ -157,16 +152,12 @@ pub fn start(
     println!("Pixel format of the window's GL context: {:?}", window.window_pixel_format());
     println!("OpenGL Profile: {:?} - OpenGL version: {:?}", gl_attr.context_profile(), gl_attr.context_version());
 
-    let mut builder = JsonBuilder { components: HashMap::new(), behaviors: HashMap::new() };
+    let mut builder = JsonBuilder { components: HashMap::new() };
     builder.components.insert(String::from("sprite"), SpriteComponent::json_builder);
 
     for c in &component_builder_declaration {
         builder.components.insert(String::from(&c.0), c.1);
-    }
-
-    for b in &behavior_builder_declaration {
-        builder.behaviors.insert(String::from(&b.0), b.1);
-    }    
+    }   
     
     let mut manager = Manager::new();
     
@@ -243,7 +234,7 @@ pub fn start(
 
         for event in event_pump.poll_iter() {
             match event {
-                Event::Quit {..} => {
+                sdl2::event::Event::Quit {..} => {
                     break 'main_loop;
                 },
                 _ => {
@@ -251,13 +242,13 @@ pub fn start(
                     match input_from_event {
                         InputFromEvent::Single(data) => {
                             if let Some(action) = action_map.get(&data.input) {
-                                let input_event = InputEvent::Action(action.clone());
-                                scene.propagate_input_event(delta, &input_event);
+                                let event = Event::Input(InputEvent::Action(action.clone()));
+                                scene.propagate_event(delta, &event);
                             }                            
 
                             if let Some(action) = axis_map.get(&data.input) {
-                                let input_event = InputEvent::Axis(action.clone(), data.value);
-                                scene.propagate_input_event(delta, &input_event);
+                                let event = Event::Input(InputEvent::Axis(action.clone(), data.value));
+                                scene.propagate_event(delta, &event);
                             }
                         },
                         _ => {}
@@ -266,7 +257,7 @@ pub fn start(
             }
         }
 
-        scene.update(delta);
+        scene.tick(delta);
 
         unsafe {
             gl::Disable(gl::SCISSOR_TEST);

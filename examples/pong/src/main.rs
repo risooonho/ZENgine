@@ -1,30 +1,20 @@
 extern crate zengine;
 
-use serde::{Serialize, Deserialize};
+use zengine::Event;
+use zengine::world::manager::Manager;
+use serde::{Deserialize};
 
-use zengine::assets::text_loader;
 use zengine::world::scene::Scene;
-use zengine::world::node::{Node, State};
-use zengine::components::sprite_component::SpriteComponent;
-use zengine::math::transform::Transform;
-use zengine::graphics::material::Material;
-use zengine::graphics::texture::TextureDeclaration;
-use zengine::math::vector3::Vector3;
-use zengine::graphics::color::Color;
 
 use zengine::components::{Component, ComponentDeclaration};
-use zengine::behaviors::{Behavior, BehaviorDeclaration};
 
 use zengine::input::InputMapping;
 use zengine::input::{Input, Action, Axis};
 use zengine::input::keyboard::Key;
 use zengine::input::controller::{Which};
-use zengine::world::hook::Hook;
-
-use std::collections::HashMap;
 
 use zengine::input::InputEvent;
-use zengine::create_hub;
+use zengine::create_event_hub;
 
 fn main() {
 
@@ -60,9 +50,6 @@ fn main() {
             (String::from("test"), Some(String::from("scenes/test.json")), Some(declare_scene))
         ],
         vec![
-            (String::from("test1"), json_comp_builder)
-        ],
-        vec![
             (String::from("move"), json_builder)
         ],
         input,
@@ -70,29 +57,10 @@ fn main() {
     );
 }
 
+pub fn json_builder(declaration: &ComponentDeclaration) -> Box<dyn Component> {
+    let mb: TranslatComponentDeclaration = declaration.decode_data();
 
-pub fn json_comp_builder(declaration: &ComponentDeclaration) -> Box<dyn Component> {
-    /*let scd: SpriteComponentDeclaration = serde_json::from(data).unwrap();
-
-    let mut c = SpriteComponent {
-        name: String::from(name),
-
-        origin: scd.origin,
-
-        sprite: Sprite::new(&scd.shader_name, scd.material, Some(scd.width), Some(scd.height))
-    };
-
-    c.sprite.set_origin(c.origin);*/
-
-    let mut c = SpriteComponent::new("ciao", 1.0, 1.0, Vector3::one(), "fdsa", Material::new(Color::red(), None));
-
-    Box::new(c)
-}
-
-pub fn json_builder(declaration: &BehaviorDeclaration) -> Box<dyn Behavior> {
-    let mb: TranslateBehaviorDeclaration = declaration.decode_data();
-
-    let mut b = TranslateBehavior {
+    let mut b = TranslateComponent {
         velocity: mb.velocity,
         x_vel: 0.0,
         y_vel: 0.0,
@@ -102,31 +70,32 @@ pub fn json_builder(declaration: &BehaviorDeclaration) -> Box<dyn Behavior> {
 }
 
 #[derive(Deserialize)]
-struct TranslateBehaviorDeclaration {
+struct TranslatComponentDeclaration {
     pub velocity: f32
 }
 
 #[derive(Debug)]
-struct TranslateBehavior {
+struct TranslateComponent {
     pub x_vel: f32,
     pub y_vel: f32,
 
     pub velocity: f32,
 }
 
-impl Behavior for TranslateBehavior {
+impl Component for TranslateComponent {
 
-    fn load(&mut self) {
+    fn load(&mut self, manager: &Manager) {
     }
 
-    fn update(&mut self, time: f32, state: &mut State) {
-        state.transform.position.x += self.x_vel * time as f32;
-        state.transform.position.y += self.y_vel * time as f32;   
+    fn tick(&mut self, delta: f32) {
+        /*state.transform.position.x += self.x_vel * time as f32;
+        state.transform.position.y += self.y_vel * time as f32;   */
     }
 
-    fn event_hub(&mut self, event: &InputEvent) {
-        create_hub!(
+    fn event_hub(&mut self, delta: f32, event: &Event) {
+        create_event_hub!(
             self,
+            delta,
             event,
             action: [
                 "test" => test
@@ -139,16 +108,16 @@ impl Behavior for TranslateBehavior {
     }
 }
 
-impl TranslateBehavior {
-    pub fn test(&mut self) {
+impl TranslateComponent {
+    pub fn test(&mut self, delta: f32) {
         println!("suca");
     }
 
-    pub fn x_move(&mut self, value: &f32) {
+    pub fn x_move(&mut self, delta: f32, value: f32) {
         self.x_vel = self.velocity * value;
     }
 
-    pub fn y_move(&mut self, value: &f32) {
+    pub fn y_move(&mut self, delta: f32, value: f32) {
         self.y_vel = self.velocity * value;
     }
 }

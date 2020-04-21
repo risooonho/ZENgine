@@ -1,17 +1,18 @@
-use std::borrow::Borrow;
-
-use crate::input::InputEvent;
-use crate::world::hook::Hook;
-use crate::behaviors::BehaviorDeclaration;
+use std::cell::RefCell;
+use std::rc::Rc;
+use crate::math::transform::Transform;
+use crate::Event;
 use crate::engine::JsonBuilder;
 use crate::components::ComponentDeclaration;
 use serde::{Deserialize};
 
 use crate::world::manager::Manager;
 use crate::components::Component;
-use crate::behaviors::Behavior;
 use crate::math::matrix4x4::Matrix4x4;
-use crate::math::transform::Transform;
+
+fn default_as_true() -> bool {
+    true
+}
 
 #[derive(Deserialize, Default)]
 pub struct NodeDeclaration {
@@ -20,41 +21,29 @@ pub struct NodeDeclaration {
     #[serde(default)]
     pub children: Vec<NodeDeclaration>,
 
-    #[serde(default)]
-    pub visible: bool,
+    #[serde(default="default_as_true")]
+    pub active: bool,
 
     #[serde(default)]
     pub transform: Transform,
 
     #[serde(default)]
-    pub components: Vec<ComponentDeclaration>,
-
-    #[serde(default)]
-    pub behaviors: Vec<BehaviorDeclaration>,
+    pub components: Vec<ComponentDeclaration>
 }
 
 impl NodeDeclaration {
     pub fn create_node(&self, json_builder: &JsonBuilder) -> Node {
         let mut node = Node::new(&self.name);
 
-        node.state.visible = self.visible;
+        node.state.active = self.active;
         node.state.transform = self.transform;
 
         for c in &self.components {
             node.components.push( 
                 match json_builder.components.get(&c.r#type) {
-                    Some(builder) => builder(c),
+                    Some(builder) => Rc::new(RefCell::new(*builder(c))),
                     None => panic!("No builder for component with type {}", c.r#type)
                 }
-            );
-        }
-
-        for b in &self.behaviors {
-            node.behaviors.push(
-                match json_builder.behaviors.get(&b.r#type) {
-                    Some(builder) => builder(b),
-                    None => panic!("No builder for behavior with type {}", b.r#type)
-                }            
             );
         }
 
@@ -76,13 +65,12 @@ pub struct Node {
     pub local_matrix: Matrix4x4,
     pub world_matrix: Matrix4x4,
 
-    pub components: Vec<Box<dyn Component>>,
-    pub behaviors: Vec<Box<dyn Behavior>>
+    pub components: Vec<Rc<RefCell<dyn Component>>>
 }
 
 pub struct State {
-    pub visible: bool,
-    pub transform: Transform
+    pub active: bool,
+    pub transform: Transform,
 }
 
 impl Node {
@@ -93,15 +81,14 @@ impl Node {
             children: Vec::new(),
 
             state: State {
-                visible: true,
+                active: true,
                 transform: Transform::new()
             },
 
             local_matrix: Matrix4x4::identity(),
             world_matrix: Matrix4x4::identity(),
-
-            components: Vec::new(),
-            behaviors: Vec::new()
+            
+            components: Vec::new()
         }
     }
 
@@ -110,20 +97,20 @@ impl Node {
     }
 
     pub fn add_component(&mut self, component: impl Component + 'static) {
-        self.components.push(Box::new(component));
+        self.components.push(Rc::new(component));
     }
 
-    pub fn add_behavior(&mut self, behavior: impl Behavior + 'static) {
-        self.behaviors.push(Box::new(behavior));
+    /*pub fn get_component_id(&self, component_name: &str) -> Option<usize> {
+        self.components.iter().position(|c| c.is_my_name(component_name))
     }
+
+    pub fn get_component<T>(&self, component_id: usize) -> &T where T: Component {
+        self.components[component_id].as_ref().as_any().downcast_ref::<T>().unwrap()
+    }*/
 
     pub fn load(&mut self, manager: &Manager) {
         for c in self.components.iter_mut() {
-            c.load(manager)
-        }
-
-        for b in self.behaviors.iter_mut() {
-            b.load();
+            c.load(self, manager)
         }
 
         for n in self.children.iter_mut() {
@@ -131,17 +118,17 @@ impl Node {
         }
     }
 
-    pub fn propagate_input_event(&mut self, time: f32, event: &InputEvent) {   
-        for b in self.behaviors.iter_mut() {
-            b.event_hub(event);
+    pub fn propagate_event(&mut self, delta: f32, event: &Event) {   
+        for b in self.components.iter_mut() {
+            b.event_hub(delta, event);
         }
 
         for n in self.children.iter_mut() {
-            n.propagate_input_event(time, event)
+            n.propagate_event(delta, event)
         }
     }
 
-    pub fn update(&mut self, time: f32, parent_world: Option<&Matrix4x4>) {
+    pub fn tick(&mut self, delta: f32, parent_world: Option<&Matrix4x4>) {
 
         self.local_matrix = self.state.transform.get_transformation_matrix();
         match parent_world {
@@ -150,20 +137,16 @@ impl Node {
         }
 
         for c in self.components.iter_mut() {
-            c.update();
-        }
-
-        for b in self.behaviors.iter_mut() {
-            b.update(time, &mut self.state);
+            c.tick(self, delta);
         }
 
         for n in self.children.iter_mut() {
-            n.update(time, Some(&self.world_matrix));
+            n.tick(delta, Some(&self.world_matrix));
         }
     }
 
     pub fn render(&self) {
-        if self.state.visible {
+        if self.state.active {
             for c in self.components.iter() {
                 c.render(&self.world_matrix);
             }
