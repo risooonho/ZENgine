@@ -1,4 +1,34 @@
-extern crate gl;
+use crate::core::Store;
+use crate::core::{Scene, Trans};
+
+#[derive(Default)]
+pub struct Engine {
+    store: Store,
+}
+
+impl Engine {
+    pub fn run<S: Scene>(mut self, mut scene: S) {
+        println!("Engine Start");
+
+        scene.on_start(&mut self.store);
+
+        'main_loop: loop {
+            match scene.update(&mut self.store) {
+                Trans::Quit => {
+                    println!("Quit transaction received");
+                    break 'main_loop;
+                }
+                _ => {}
+            }
+        }
+
+        scene.on_stop(&mut self.store);
+
+        println!("Engine Stop");
+    }
+}
+
+/*extern crate gl;
 extern crate sdl2;
 
 use crate::gl_utilities::shader::ShaderManager;
@@ -240,3 +270,4 @@ fn get_display_mode(video_subsystem: &VideoSubsystem, option: &EngineOption) -> 
         option.screen_width, option.screen_height
     );
 }
+*/

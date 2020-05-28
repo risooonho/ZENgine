@@ -1,15 +1,41 @@
 extern crate zengine;
 
-fn main() {
+use zengine::core::Scene;
+use zengine::core::Store;
+use zengine::core::Trans;
+use zengine::Engine;
 
-    zengine::engine::start(
-        zengine::engine::EngineOption {
-            title: String::from("PONG"),
-            fullscreen: false,
-            virtual_width: 1920,
-            virtual_height: 1080,
-            screen_width: 800,
-            screen_height: 600
+fn main() {
+    Engine::default().run(Game {
+        execution_number: 10,
+    });
+}
+
+pub struct Game {
+    execution_number: u32,
+}
+
+impl Scene for Game {
+    fn on_start(&mut self, store: &mut Store) {
+        println!("Game scene on start");
+
+        let e = store.build_entity();
+
+        println!("Entity {:?}", e);
+    }
+
+    fn on_stop(&mut self, store: &mut Store) {
+        println!("Game scene on stop");
+    }
+
+    fn update(&mut self, store: &mut Store) -> Trans {
+        match self.execution_number {
+            0 => Trans::Quit,
+            _ => {
+                println!("Store {:?}", store);
+                self.execution_number -= 1;
+                Trans::None
+            }
         }
-    );
+    }
 }
