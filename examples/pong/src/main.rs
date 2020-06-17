@@ -1,6 +1,8 @@
 extern crate zengine;
 
+use zengine::core::system::ReadEntities;
 use zengine::core::system::ReadSet;
+use zengine::core::system::WriteSet;
 use zengine::core::Component;
 use zengine::core::Scene;
 use zengine::core::Store;
@@ -21,14 +23,29 @@ fn main() {
 pub struct System1 {}
 
 impl<'a> System<'a> for System1 {
-    type Data = ReadSet<'a, Test>;
+    type Data = (
+        WriteSet<'a, Test>,
+        WriteSet<'a, Position>,
+        ReadSet<'a, Test2>,
+        ReadEntities<'a>,
+    );
 
     fn init(&mut self, store: &mut Store) {
         println!("System 1 init");
     }
 
-    fn run(&mut self, data: Self::Data) {
-        println!("data {:?}", data);
+    fn run(&mut self, (mut test, mut position, test2, entities): Self::Data) {
+        for t in test.values_mut() {
+            t.data += 1;
+        }
+        for t in position.values_mut() {
+            t.x += 1.0;
+        }
+
+        println!("data {:?}", test);
+        println!("data {:?}", position);
+        println!("test2 {:?}", test2);
+        println!("entities {:?}", entities);
 
         /*let mut test = store.get_components_mut::<Test>().unwrap();
 
@@ -55,7 +72,7 @@ impl<'a> System<'a> for System1 {
 pub struct System2 {}
 
 impl<'a> System<'a> for System2 {
-    type Data = ReadSet<'a, Position>;
+    type Data = ();
     fn init(&mut self, store: &mut Store) {
         println!("System 2 init");
     }
@@ -80,8 +97,14 @@ pub struct Test {
     pub data: u32,
 }
 
+#[derive(Debug)]
+pub struct Test2 {
+    pub data2: u32,
+}
+
 impl Component for Position {}
 impl Component for Test {}
+impl Component for Test2 {}
 
 pub struct Game {
     execution_number: u32,
