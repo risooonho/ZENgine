@@ -24,14 +24,21 @@ impl System for System1 {
         println!("System 1 init");
     }
 
-    fn run(&mut self, store: &mut Store) {
-        let test = store.get_components_mut::<Test>().unwrap();
+    fn run(&mut self, store: &Store) {
+        let mut test = store.get_components_mut::<Test>().unwrap();
+
+        let mut test2 = store.get_components_mut::<Position>().unwrap();
 
         for t in test.values_mut() {
             t.data += 1;
         }
 
+        for t in test2.values_mut() {
+            t.x += 1.0;
+        }
+
         println!("System 1 data {:?}", test);
+        println!("System 1 data2 {:?}", test2);
     }
 
     fn dispose(&mut self, store: &mut Store) {
@@ -47,7 +54,7 @@ impl System for System2 {
         println!("System 2 init");
     }
 
-    fn run(&mut self, store: &mut Store) {
+    fn run(&mut self, store: &Store) {
         println!("System 2 run");
     }
 

@@ -4,6 +4,8 @@ use crate::core::component::Set;
 use crate::core::entity::Entities;
 use crate::core::entity::Entity;
 use crate::core::entity::EntityBuilder;
+use std::cell::Ref;
+use std::cell::RefMut;
 
 #[derive(Default, Debug)]
 pub struct Store {
@@ -16,15 +18,15 @@ impl Store {
         EntityBuilder::new(self.entities.create_entity(), self)
     }
 
-    pub fn delete_entity(&mut self, entity: &Entity) {
-        self.components.delete_entity(entity);
+    pub fn remove_entity(&self, entity: &Entity) {
+        self.components.remove_entity(entity);
     }
 
-    pub fn get_components<C: Component>(&self) -> Option<&Set<C>> {
+    pub fn get_components<C: Component>(&self) -> Option<Ref<Set<C>>> {
         self.components.get::<C>()
     }
 
-    pub fn get_components_mut<C: Component>(&mut self) -> Option<&mut Set<C>> {
+    pub fn get_components_mut<C: Component>(&self) -> Option<RefMut<Set<C>>> {
         self.components.get_mut::<C>()
     }
 
