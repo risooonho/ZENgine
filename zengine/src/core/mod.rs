@@ -2,7 +2,7 @@ mod component;
 pub mod entity;
 mod scene;
 mod store;
-mod system;
+pub mod system;
 
 pub use component::Component;
 pub use scene::{Scene, Trans};
