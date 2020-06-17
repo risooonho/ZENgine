@@ -3,6 +3,7 @@ extern crate zengine;
 use zengine::core::system::ReadEntities;
 use zengine::core::system::ReadSet;
 use zengine::core::system::WriteSet;
+use zengine::core::timing::{FrameLimiter, TimingSystem};
 use zengine::core::Component;
 use zengine::core::Scene;
 use zengine::core::Store;
@@ -14,6 +15,7 @@ fn main() {
     Engine::default()
         .with_system(System1 {})
         .with_system(System2 {})
+        .with_system(TimingSystem::default().with_limiter(FrameLimiter::new(1)))
         .run(Game {
             execution_number: 10,
         });

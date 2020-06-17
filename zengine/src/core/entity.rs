@@ -18,7 +18,6 @@ impl Entities {
     }
 }
 
-#[derive(Debug)]
 pub struct EntityBuilder<'a> {
     entity: Entity,
     store: &'a mut Store,
