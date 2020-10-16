@@ -1,5 +1,6 @@
 extern crate zengine;
 
+use std::collections::HashMap;
 use zengine::core::system::ReadEntities;
 use zengine::core::system::ReadSet;
 use zengine::core::system::WriteSet;
@@ -9,9 +10,64 @@ use zengine::core::Scene;
 use zengine::core::Store;
 use zengine::core::System;
 use zengine::core::Trans;
+use zengine::device::controller::{ControllerButton, Which};
+use zengine::device::keyboard::Key;
+use zengine::event::input::{Axis, Input};
+use zengine::event::Bindings;
+use zengine::event::InputType;
+use zengine::event::{ActionBind, AxisBind};
 use zengine::Engine;
 
+#[derive(Hash, Eq, PartialEq, Clone, Debug)]
+pub enum UserInput {
+    Jump,
+    Move_x,
+}
+impl InputType for UserInput {}
+
 fn main() {
+    let mut bindings = Bindings::<UserInput> {
+        action_mappings: HashMap::default(),
+        axis_mappings: HashMap::default(),
+    };
+
+    bindings.action_mappings.insert(
+        UserInput::Jump,
+        vec![
+            ActionBind {
+                source: Input::Keyboard { key: Key::Space },
+            },
+            ActionBind {
+                source: Input::ControllerButton {
+                    device_id: 0,
+                    button: ControllerButton::A,
+                },
+            },
+        ],
+    );
+
+    bindings.axis_mappings.insert(
+        UserInput::Move_x,
+        vec![
+            AxisBind {
+                source: Input::Keyboard { key: Key::A },
+                scale: -1.0,
+            },
+            AxisBind {
+                source: Input::Keyboard { key: Key::D },
+                scale: 1.0,
+            },
+            AxisBind {
+                source: Input::ControllerStick {
+                    device_id: 0,
+                    which: Which::Left,
+                    axis: Axis::X,
+                },
+                scale: 1.0,
+            },
+        ],
+    );
+
     Engine::default()
         .with_system(System1 {})
         .with_system(System2 {})

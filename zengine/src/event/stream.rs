@@ -1,3 +1,4 @@
+use crate::core::Resource;
 use std::any::Any;
 use std::cell::RefCell;
 use std::cell::RefMut;
@@ -24,6 +25,8 @@ impl<E: Any> Default for EventStream<E> {
     }
   }
 }
+
+impl<E: Any> Resource for EventStream<E> {}
 
 impl<E: Any> EventStream<E> {
   pub fn subscribe(&mut self) -> SubscriptionToken {
