@@ -62,6 +62,8 @@ impl<E: Any> EventStream<E> {
       } else {
         self.buffer.push(event);
       }
+
+      self.head = Some(head);
     } else {
       self.buffer.push(event);
       self.head = Some(0)

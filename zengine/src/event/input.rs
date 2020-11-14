@@ -38,6 +38,7 @@ pub enum Input {
     },
 }
 
+#[derive(Debug)]
 pub struct InputEvent {
     pub input: Input,
     pub value: f32,

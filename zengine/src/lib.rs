@@ -6,5 +6,6 @@ pub mod event;
 mod gl_utilities;
 mod graphics;
 mod math;
+pub mod platform;
 
 pub use engine::Engine;

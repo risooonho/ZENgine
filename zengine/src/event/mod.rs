@@ -7,7 +7,7 @@ use std::hash::Hash;
 
 pub mod input;
 pub mod input_system;
-mod stream;
+pub mod stream;
 
 pub trait InputType: Any + Eq + PartialEq + Hash + Clone + Debug {}
 

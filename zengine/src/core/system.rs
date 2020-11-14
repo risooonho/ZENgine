@@ -35,7 +35,7 @@ where
     }
 }
 
-pub trait System<'a>: Any + Debug {
+pub trait System<'a>: Any {
     type Data: Data<'a>;
 
     fn init(&mut self, store: &mut Store) {}

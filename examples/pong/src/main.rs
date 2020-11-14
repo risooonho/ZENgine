@@ -1,6 +1,7 @@
 extern crate zengine;
 
 use std::collections::HashMap;
+use zengine::core::system::Read;
 use zengine::core::system::ReadEntities;
 use zengine::core::system::ReadSet;
 use zengine::core::system::WriteSet;
@@ -12,10 +13,14 @@ use zengine::core::System;
 use zengine::core::Trans;
 use zengine::device::controller::{ControllerButton, Which};
 use zengine::device::keyboard::Key;
+use zengine::device::mouse::MouseButton;
 use zengine::event::input::{Axis, Input};
+use zengine::event::input_system::InputSystem;
 use zengine::event::Bindings;
+use zengine::event::InputHandler;
 use zengine::event::InputType;
 use zengine::event::{ActionBind, AxisBind};
+use zengine::platform::platform_system::PlatformSystem;
 use zengine::Engine;
 
 #[derive(Hash, Eq, PartialEq, Clone, Debug)]
@@ -39,8 +44,13 @@ fn main() {
             },
             ActionBind {
                 source: Input::ControllerButton {
-                    device_id: 0,
+                    device_id: 1,
                     button: ControllerButton::A,
+                },
+            },
+            ActionBind {
+                source: Input::MouseButton {
+                    button: MouseButton::Left,
                 },
             },
         ],
@@ -59,7 +69,7 @@ fn main() {
             },
             AxisBind {
                 source: Input::ControllerStick {
-                    device_id: 0,
+                    device_id: 1,
                     which: Which::Left,
                     axis: Axis::X,
                 },
@@ -69,9 +79,11 @@ fn main() {
     );
 
     Engine::default()
+        .with_system(PlatformSystem::default())
+        .with_system(InputSystem::new(bindings))
         .with_system(System1 {})
         .with_system(System2 {})
-        .with_system(TimingSystem::default().with_limiter(FrameLimiter::new(1)))
+        .with_system(TimingSystem::default().with_limiter(FrameLimiter::new(60)))
         .run(Game {
             execution_number: 10,
         });
@@ -86,13 +98,14 @@ impl<'a> System<'a> for System1 {
         WriteSet<'a, Position>,
         ReadSet<'a, Test2>,
         ReadEntities<'a>,
+        Read<'a, InputHandler<UserInput>>,
     );
 
     fn init(&mut self, store: &mut Store) {
         println!("System 1 init");
     }
 
-    fn run(&mut self, (mut test, mut position, test2, entities): Self::Data) {
+    fn run(&mut self, (mut test, mut position, test2, entities, input_handler): Self::Data) {
         for t in test.values_mut() {
             t.data += 1;
         }
@@ -100,10 +113,19 @@ impl<'a> System<'a> for System1 {
             t.x += 1.0;
         }
 
-        println!("data {:?}", test);
-        println!("data {:?}", position);
-        println!("test2 {:?}", test2);
-        println!("entities {:?}", entities);
+        //println!("data {:?}", test);
+        //println!("data {:?}", position);
+        //println!("test2 {:?}", test2);
+        //println!("entities {:?}", entities);
+
+        println!(
+            "JUMP VALUE {:?}",
+            input_handler.action_value(UserInput::Jump)
+        );
+        println!(
+            "MOVE X VALUE {:?}",
+            input_handler.axis_value(UserInput::Move_x)
+        );
 
         /*let mut test = store.get_components_mut::<Test>().unwrap();
 
@@ -136,7 +158,7 @@ impl<'a> System<'a> for System2 {
     }
 
     fn run(&mut self, data: Self::Data) {
-        println!("System 2 run");
+        //println!("System 2 run");
     }
 
     fn dispose(&mut self, store: &mut Store) {
@@ -194,7 +216,7 @@ impl Scene for Game {
 
     fn update(&mut self, store: &mut Store) -> Trans {
         match self.execution_number {
-            0 => Trans::Quit,
+            0 => Trans::None,
             _ => {
                 //println!("Store {:?}", store);
                 self.execution_number -= 1;

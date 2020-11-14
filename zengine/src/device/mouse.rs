@@ -5,3 +5,12 @@ pub enum MouseButton {
     Middle = sdl2::mouse::MouseButton::Middle as u8,
     Right = sdl2::mouse::MouseButton::Right as u8,
 }
+
+impl MouseButton {
+    pub fn from_sdl_button(button: sdl2::mouse::MouseButton) -> Self {
+        match unsafe { std::mem::transmute(button as u8) } {
+            Some(button) => button,
+            None => panic!("Cannot convert number {} to MouseButton", button as u8),
+        }
+    }
+}

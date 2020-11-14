@@ -23,3 +23,15 @@ pub enum ControllerButton {
     DPadLeft = sdl2::controller::Button::DPadLeft as i32,
     DPadRight = sdl2::controller::Button::DPadRight as i32,
 }
+
+impl ControllerButton {
+    pub fn from_sdl_button(button: sdl2::controller::Button) -> ControllerButton {
+        match unsafe { std::mem::transmute(button as i32) } {
+            Some(button) => button,
+            None => panic!(
+                "Cannot convert number {} to `ControllerButton`",
+                (button) as i32
+            ),
+        }
+    }
+}

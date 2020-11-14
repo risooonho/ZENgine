@@ -237,3 +237,12 @@ pub enum Key {
     Eject = sdl2::keyboard::Keycode::Eject as i32,
     Sleep = sdl2::keyboard::Keycode::Sleep as i32,
 }
+
+impl Key {
+    pub fn from_sdl_keycode(key: sdl2::keyboard::Keycode) -> Self {
+        match unsafe { std::mem::transmute(key as i32) } {
+            Some(key) => key,
+            None => panic!("Cannot convert number {} to Key", key as i32),
+        }
+    }
+}
