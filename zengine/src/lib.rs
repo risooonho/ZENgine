@@ -5,7 +5,7 @@ mod engine;
 pub mod event;
 mod gl_utilities;
 pub mod graphics;
-mod math;
+pub mod math;
 pub mod platform;
 pub mod render;
 

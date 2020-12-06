@@ -84,8 +84,6 @@ impl<'a> System<'a> for TimingSystem {
 
         data.delta = elapsed;
         self.last_call = finish;
-
-        println!("time: {:?}", data);
     }
 
     fn dispose(&mut self, store: &mut Store) {}

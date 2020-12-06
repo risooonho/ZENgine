@@ -21,9 +21,12 @@ use zengine::event::InputHandler;
 use zengine::event::InputType;
 use zengine::event::{ActionBind, AxisBind};
 use zengine::graphics::color::Color;
+use zengine::math::transform::Transform;
+use zengine::math::vector3::Vector3;
 use zengine::platform::platform_system::PlatformSystem;
 use zengine::render::render_system::RenderSystem;
 use zengine::render::Background;
+use zengine::render::Sprite;
 use zengine::render::WindowSpecs;
 use zengine::Engine;
 
@@ -123,15 +126,6 @@ impl<'a> System<'a> for System1 {
         //println!("test2 {:?}", test2);
         //println!("entities {:?}", entities);
 
-        println!(
-            "JUMP VALUE {:?}",
-            input_handler.action_value(UserInput::Jump)
-        );
-        println!(
-            "MOVE X VALUE {:?}",
-            input_handler.axis_value(UserInput::Move_x)
-        );
-
         /*let mut test = store.get_components_mut::<Test>().unwrap();
 
         let mut test2 = store.get_components_mut::<Position>().unwrap();
@@ -199,23 +193,34 @@ impl Scene for Game {
     fn on_start(&mut self, store: &mut Store) {
         println!("Game scene on start");
 
-        let e = store
+        store
             .build_entity()
-            .with(Position { x: 43.0, y: 3.5 })
-            .with(Test { data: 5 })
+            .with(Sprite {
+                width: 40.0,
+                height: 40.0,
+                origin: Vector3::zero(),
+                color: Color::black(),
+            })
+            .with(Transform::default())
             .build();
-        //println!("Entity {:?}", e);
 
-        {
-            let e2 = store.build_entity().with(Test { data: 5 }).build();
-
-            //println!("Entity2 {:?}", e2);
-        }
-
-        //println!("Store {:?}", store);
+        store
+            .build_entity()
+            .with(Sprite {
+                width: 200.0,
+                height: 200.0,
+                origin: Vector3::zero(),
+                color: Color::red(),
+            })
+            .with(Transform::new(
+                Vector3::new(300.0, 200.0, 0.0),
+                Vector3::new(0.0, 0.0, 0.0),
+                Vector3::one(),
+            ))
+            .build();
 
         store.insert_resource(Background {
-            color: Color::blue(),
+            color: Color::white(),
         })
     }
 
