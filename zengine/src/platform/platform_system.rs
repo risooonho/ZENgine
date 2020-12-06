@@ -1,5 +1,7 @@
 use crate::core::system::System;
 use crate::core::system::Write;
+use crate::core::Store;
+use crate::core::Trans;
 use crate::device::controller::{ControllerButton, Which};
 use crate::device::keyboard::Key;
 use crate::device::mouse::MouseButton;
@@ -15,30 +17,13 @@ use std::collections::HashMap;
 pub struct PlatformSystem {
     sdl_context: Sdl,
     event_pump: EventPump,
-    window: Window,
     controllers: HashMap<u32, (u32, GameController)>,
 }
 
 impl Default for PlatformSystem {
     fn default() -> Self {
         let sdl_context = sdl2::init().unwrap();
-        let video_subsystem = sdl_context.video().unwrap();
         let controller_subsystem = sdl_context.game_controller().unwrap();
-
-        let gl_attr = video_subsystem.gl_attr();
-        gl_attr.set_context_profile(GLProfile::Core);
-        if cfg!(target_os = "macos") {
-            gl_attr.set_context_version(4, 1);
-        } else {
-            gl_attr.set_context_version(4, 6);
-        }
-        gl_attr.set_double_buffer(true);
-        let window = video_subsystem
-            .window("ZENgine", 800, 600)
-            .opengl()
-            .allow_highdpi()
-            .build()
-            .unwrap();
 
         let event_pump = sdl_context.event_pump().unwrap();
 
@@ -80,18 +65,30 @@ impl Default for PlatformSystem {
         PlatformSystem {
             sdl_context,
             event_pump,
-            window,
             controllers,
         }
     }
 }
 
 impl<'a> System<'a> for PlatformSystem {
-    type Data = Write<'a, EventStream<InputEvent>>;
+    type Data = (
+        Write<'a, EventStream<InputEvent>>,
+        Write<'a, EventStream<Trans>>,
+    );
 
-    fn run(&mut self, mut input: Self::Data) {
+    fn init(&mut self, store: &mut Store) {
+        let video_subsystem = self.sdl_context.video().unwrap();
+
+        store.insert_resource(video_subsystem);
+    }
+
+    fn run(&mut self, (mut input, mut trans): Self::Data) {
         for event in self.event_pump.poll_iter() {
             match event {
+                Event::Quit { .. } => {
+                    trans.publish(Trans::Quit);
+                    println!("Quit event sended");
+                }
                 Event::KeyDown {
                     keycode: Some(keycode),
                     ..

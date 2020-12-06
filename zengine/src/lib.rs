@@ -4,8 +4,9 @@ pub mod device;
 mod engine;
 pub mod event;
 mod gl_utilities;
-mod graphics;
+pub mod graphics;
 mod math;
 pub mod platform;
+pub mod render;
 
 pub use engine::Engine;

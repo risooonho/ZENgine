@@ -1,7 +1,7 @@
 use crate::core::system::AnySystem;
 use crate::core::Store;
 use crate::core::System;
-use crate::core::{Scene, Trans};
+use crate::core::{AnyScene, Trans};
 
 #[derive(Default)]
 pub struct Engine {
@@ -16,7 +16,7 @@ impl Engine {
         self
     }
 
-    pub fn run<S: Scene>(mut self, mut scene: S) {
+    pub fn run<S: AnyScene>(mut self, mut scene: S) {
         println!("Engine Start");
 
         println!("Init Systems");

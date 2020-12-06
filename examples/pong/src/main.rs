@@ -20,7 +20,11 @@ use zengine::event::Bindings;
 use zengine::event::InputHandler;
 use zengine::event::InputType;
 use zengine::event::{ActionBind, AxisBind};
+use zengine::graphics::color::Color;
 use zengine::platform::platform_system::PlatformSystem;
+use zengine::render::render_system::RenderSystem;
+use zengine::render::Background;
+use zengine::render::WindowSpecs;
 use zengine::Engine;
 
 #[derive(Hash, Eq, PartialEq, Clone, Debug)]
@@ -83,6 +87,7 @@ fn main() {
         .with_system(InputSystem::new(bindings))
         .with_system(System1 {})
         .with_system(System2 {})
+        .with_system(RenderSystem::new(WindowSpecs::default()))
         .with_system(TimingSystem::default().with_limiter(FrameLimiter::new(60)))
         .run(Game {
             execution_number: 10,
@@ -208,6 +213,10 @@ impl Scene for Game {
         }
 
         //println!("Store {:?}", store);
+
+        store.insert_resource(Background {
+            color: Color::blue(),
+        })
     }
 
     fn on_stop(&mut self, store: &mut Store) {

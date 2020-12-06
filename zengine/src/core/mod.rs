@@ -6,7 +6,7 @@ pub mod system;
 pub mod timing;
 
 pub use component::Component;
-pub use scene::{Scene, Trans};
+pub use scene::{AnyScene, Scene, Trans};
 pub use store::Resource;
 pub use store::Store;
 pub use system::System;
