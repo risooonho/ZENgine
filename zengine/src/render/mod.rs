@@ -1,6 +1,7 @@
 use crate::core::Component;
 use crate::core::Resource;
 use crate::graphics::color::Color;
+use crate::graphics::texture::SpriteType;
 use crate::math::vector3::Vector3;
 
 pub mod render_system;
@@ -47,10 +48,11 @@ impl Default for Background {
 }
 
 #[derive(Debug)]
-pub struct Sprite {
+pub struct Sprite<ST: SpriteType> {
     pub width: f32,
     pub height: f32,
     pub origin: Vector3,
     pub color: Color,
+    pub sprite_type: ST,
 }
-impl Component for Sprite {}
+impl<ST: SpriteType> Component for Sprite<ST> {}

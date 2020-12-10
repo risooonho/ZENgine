@@ -21,6 +21,9 @@ use zengine::event::InputHandler;
 use zengine::event::InputType;
 use zengine::event::{ActionBind, AxisBind};
 use zengine::graphics::color::Color;
+use zengine::graphics::texture::SpriteDescriptor;
+use zengine::graphics::texture::SpriteType;
+use zengine::graphics::texture::TextureManager;
 use zengine::math::transform::Transform;
 use zengine::math::vector3::Vector3;
 use zengine::platform::platform_system::PlatformSystem;
@@ -36,6 +39,13 @@ pub enum UserInput {
     Move_x,
 }
 impl InputType for UserInput {}
+
+#[derive(Hash, Eq, PartialEq, Clone, Debug)]
+pub enum Sprites {
+    Duck,
+    Logo,
+}
+impl SpriteType for Sprites {}
 
 fn main() {
     let mut bindings = Bindings::<UserInput> {
@@ -90,7 +100,7 @@ fn main() {
         .with_system(InputSystem::new(bindings))
         .with_system(System1 {})
         .with_system(System2 {})
-        .with_system(RenderSystem::new(WindowSpecs::default()))
+        .with_system(RenderSystem::<Sprites>::new(WindowSpecs::default()))
         .with_system(TimingSystem::default().with_limiter(FrameLimiter::new(60)))
         .run(Game {
             execution_number: 10,
@@ -193,13 +203,40 @@ impl Scene for Game {
     fn on_start(&mut self, store: &mut Store) {
         println!("Game scene on start");
 
+        {
+            let mut texture_manager = store.get_resource_mut::<TextureManager<Sprites>>().unwrap();
+
+            texture_manager
+                .build("sheet.png")
+                .with_sprite(
+                    Sprites::Duck,
+                    SpriteDescriptor {
+                        width: 170,
+                        height: 200,
+                        x: 0,
+                        y: 0,
+                    },
+                )
+                .with_sprite(
+                    Sprites::Logo,
+                    SpriteDescriptor {
+                        width: 128,
+                        height: 128,
+                        x: 170,
+                        y: 0,
+                    },
+                )
+                .load();
+        }
+
         store
             .build_entity()
             .with(Sprite {
                 width: 40.0,
                 height: 40.0,
                 origin: Vector3::zero(),
-                color: Color::black(),
+                color: Color::white(),
+                sprite_type: Sprites::Logo,
             })
             .with(Transform::default())
             .build();
@@ -211,6 +248,7 @@ impl Scene for Game {
                 height: 200.0,
                 origin: Vector3::zero(),
                 color: Color::red(),
+                sprite_type: Sprites::Duck,
             })
             .with(Transform::new(
                 Vector3::new(300.0, 200.0, 0.0),
