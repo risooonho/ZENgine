@@ -125,8 +125,8 @@ impl Matrix4x4 {
     pub fn orthographics(
         left: f32,
         right: f32,
-        top: f32,
         bottom: f32,
+        top: f32,
         near_clip: f32,
         far_clip: f32,
     ) -> Matrix4x4 {

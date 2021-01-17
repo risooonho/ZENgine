@@ -20,6 +20,8 @@ use zengine::event::Bindings;
 use zengine::event::InputHandler;
 use zengine::event::InputType;
 use zengine::event::{ActionBind, AxisBind};
+use zengine::graphics::camera::ActiveCamera;
+use zengine::graphics::camera::{Camera, CameraMode};
 use zengine::graphics::color::Color;
 use zengine::graphics::texture::SpriteDescriptor;
 use zengine::graphics::texture::SpriteType;
@@ -229,6 +231,31 @@ impl Scene for Game {
                 .load();
         }
 
+        let camera1 = store
+            .build_entity()
+            .with(Camera {
+                width: 800,
+                height: 600,
+                mode: CameraMode::Mode2D,
+            })
+            .build();
+
+        let camera2 = store
+            .build_entity()
+            .with(Camera {
+                width: 600,
+                height: 600,
+                mode: CameraMode::Mode2D,
+            })
+            .with(Transform::new(
+                Vector3::new(300.0, 300.0, 0.0),
+                Vector3::new(0.0, 0.0, 0.0),
+                Vector3::one(),
+            ))
+            .build();
+
+        store.insert_resource(ActiveCamera { entity: camera2 });
+
         store
             .build_entity()
             .with(Sprite {
@@ -238,7 +265,11 @@ impl Scene for Game {
                 color: Color::white(),
                 sprite_type: Sprites::Logo,
             })
-            .with(Transform::default())
+            .with(Transform::new(
+                Vector3::new(0.0, 0.0, 0.0),
+                Vector3::new(0.0, 0.0, 0.0),
+                Vector3::one(),
+            ))
             .build();
 
         store
@@ -251,7 +282,7 @@ impl Scene for Game {
                 sprite_type: Sprites::Duck,
             })
             .with(Transform::new(
-                Vector3::new(300.0, 200.0, 0.0),
+                Vector3::new(0.0, 200.0, 0.0),
                 Vector3::new(0.0, 0.0, 0.0),
                 Vector3::one(),
             ))

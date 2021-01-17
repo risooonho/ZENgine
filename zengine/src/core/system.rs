@@ -54,6 +54,8 @@ pub trait Data<'a> {
 pub type ReadEntities<'a> = &'a Entities;
 pub type Read<'a, R> = Ref<'a, R>;
 pub type Write<'a, R> = RefMut<'a, R>;
+pub type ReadOption<'a, R> = Option<Ref<'a, R>>;
+pub type WriteOption<'a, R> = Option<RefMut<'a, R>>;
 pub type ReadSet<'a, C> = Ref<'a, Set<C>>;
 pub type WriteSet<'a, C> = RefMut<'a, Set<C>>;
 
@@ -90,6 +92,22 @@ impl<'a, R: Resource + Default> Data<'a> for Write<'a, R> {
 
     fn fetch(store: &'a Store) -> Self {
         store.get_resource_mut::<R>().unwrap()
+    }
+}
+
+impl<'a, R: Resource> Data<'a> for ReadOption<'a, R> {
+    fn setup(store: &mut Store) {}
+
+    fn fetch(store: &'a Store) -> Self {
+        store.get_resource::<R>()
+    }
+}
+
+impl<'a, R: Resource> Data<'a> for WriteOption<'a, R> {
+    fn setup(store: &mut Store) {}
+
+    fn fetch(store: &'a Store) -> Self {
+        store.get_resource_mut::<R>()
     }
 }
 
